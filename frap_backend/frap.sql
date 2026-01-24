@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 02-11-2025 a las 18:45:01
+-- Tiempo de generación: 24-01-2026 a las 05:46:22
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -53,7 +53,19 @@ CREATE TABLE `alergia` (
 
 CREATE TABLE `anatomica` (
   `id_Anatomica` int(11) NOT NULL,
-  `nombre` varchar(50) NOT NULL
+  `nombre` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `fotografias`
+--
+
+CREATE TABLE `fotografias` (
+  `id_Fotografia` int(11) NOT NULL,
+  `reporte_id` int(11) NOT NULL,
+  `foto` blob NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -64,7 +76,7 @@ CREATE TABLE `anatomica` (
 
 CREATE TABLE `insumo` (
   `id_Insumo` int(11) NOT NULL,
-  `nombre` varchar(50) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
   `cantidad` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -76,7 +88,7 @@ CREATE TABLE `insumo` (
 
 CREATE TABLE `lesion` (
   `id_Lesion` int(11) NOT NULL,
-  `nombre` varchar(50) NOT NULL
+  `nombre` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -87,7 +99,7 @@ CREATE TABLE `lesion` (
 
 CREATE TABLE `lugar` (
   `id_Lugar` int(11) NOT NULL,
-  `nombre` varchar(50) NOT NULL
+  `nombre` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -109,9 +121,9 @@ CREATE TABLE `medicamento` (
 
 CREATE TABLE `nivel_conciencia` (
   `id_NivelConciencia` int(11) NOT NULL,
-  `motora` tinyint(4) NOT NULL,
-  `verbal` tinyint(4) NOT NULL,
-  `ocular` tinyint(4) NOT NULL,
+  `motora` int(11) NOT NULL,
+  `verbal` int(11) NOT NULL,
+  `ocular` int(11) NOT NULL,
   `total` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -123,9 +135,9 @@ CREATE TABLE `nivel_conciencia` (
 
 CREATE TABLE `paciente` (
   `id_Paciente` int(11) NOT NULL,
-  `nombre` varchar(50) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
   `edad` int(11) NOT NULL,
-  `genero` tinyint(4) NOT NULL
+  `genero` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -169,10 +181,10 @@ CREATE TABLE `paciente_patologia` (
 
 CREATE TABLE `paramedico` (
   `id_paramedico` int(11) NOT NULL,
-  `nombre` varchar(50) NOT NULL,
-  `correoInst` varchar(50) NOT NULL,
-  `correEsc` varchar(50) NOT NULL,
-  `usuario` varchar(50) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `correoInst` varchar(100) NOT NULL,
+  `correoEsc` varchar(100) NOT NULL,
+  `usuario` varchar(100) NOT NULL,
   `contraseña` varchar(100) NOT NULL,
   `firma_paramedico` blob NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -208,14 +220,14 @@ CREATE TABLE `pupilas` (
 CREATE TABLE `reporte` (
   `id_Reporte` int(11) NOT NULL,
   `fecha_hora` datetime NOT NULL,
-  `observaciones` text NOT NULL,
-  `recomendaciones` text NOT NULL,
+  `observaciones` text DEFAULT NULL,
+  `recomendaciones` text DEFAULT NULL,
   `traslado_aceptado` tinyint(1) NOT NULL,
-  `numero_unidad` varchar(50) NOT NULL,
-  `nombre_operador` varchar(50) DEFAULT NULL,
+  `numero_unidad` varchar(100) DEFAULT NULL,
+  `nombre_operador` varchar(100) DEFAULT NULL,
   `firma_operador` blob DEFAULT NULL,
   `firma_paciente` blob NOT NULL,
-  `nombre_testigo` varchar(50) DEFAULT NULL,
+  `nombre_testigo` varchar(100) DEFAULT NULL,
   `firma_testigo` blob DEFAULT NULL,
   `lugar_id` int(11) NOT NULL,
   `signos_id` int(11) NOT NULL,
@@ -262,7 +274,7 @@ CREATE TABLE `reporte_lesion` (
 --
 
 CREATE TABLE `reporte_pupilas` (
-  `paciente_id` int(11) NOT NULL,
+  `reporte_id` int(11) NOT NULL,
   `pupilas_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -278,7 +290,7 @@ CREATE TABLE `signos_vitales` (
   `FC` int(11) NOT NULL,
   `FR` int(11) NOT NULL,
   `SpO2` int(11) NOT NULL,
-  `T/A` varchar(20) NOT NULL,
+  `T/A` varchar(100) NOT NULL,
   `GLU` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -290,24 +302,26 @@ CREATE TABLE `signos_vitales` (
 -- Indices de la tabla `admin`
 --
 ALTER TABLE `admin`
-  ADD PRIMARY KEY (`id_admin`),
-  ADD UNIQUE KEY `usuario` (`usuario`),
-  ADD UNIQUE KEY `correo` (`correo`),
-  ADD UNIQUE KEY `usuario_2` (`usuario`);
+  ADD PRIMARY KEY (`id_admin`);
 
 --
 -- Indices de la tabla `alergia`
 --
 ALTER TABLE `alergia`
-  ADD PRIMARY KEY (`id_Alergia`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
+  ADD PRIMARY KEY (`id_Alergia`);
 
 --
 -- Indices de la tabla `anatomica`
 --
 ALTER TABLE `anatomica`
-  ADD PRIMARY KEY (`id_Anatomica`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
+  ADD PRIMARY KEY (`id_Anatomica`);
+
+--
+-- Indices de la tabla `fotografias`
+--
+ALTER TABLE `fotografias`
+  ADD PRIMARY KEY (`id_Fotografia`),
+  ADD KEY `foto_reporte` (`reporte_id`);
 
 --
 -- Indices de la tabla `insumo`
@@ -319,22 +333,19 @@ ALTER TABLE `insumo`
 -- Indices de la tabla `lesion`
 --
 ALTER TABLE `lesion`
-  ADD PRIMARY KEY (`id_Lesion`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
+  ADD PRIMARY KEY (`id_Lesion`);
 
 --
 -- Indices de la tabla `lugar`
 --
 ALTER TABLE `lugar`
-  ADD PRIMARY KEY (`id_Lugar`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
+  ADD PRIMARY KEY (`id_Lugar`);
 
 --
 -- Indices de la tabla `medicamento`
 --
 ALTER TABLE `medicamento`
-  ADD PRIMARY KEY (`id_Medicamento`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
+  ADD PRIMARY KEY (`id_Medicamento`);
 
 --
 -- Indices de la tabla `nivel_conciencia`
@@ -353,52 +364,48 @@ ALTER TABLE `paciente`
 --
 ALTER TABLE `paciente_alergia`
   ADD PRIMARY KEY (`paciente_id`,`alergia_id`),
-  ADD KEY `alergia_id` (`alergia_id`);
+  ADD KEY `paciente_alergia_1` (`alergia_id`);
 
 --
 -- Indices de la tabla `paciente_medicamento`
 --
 ALTER TABLE `paciente_medicamento`
   ADD PRIMARY KEY (`paciente_id`,`medicamento_id`),
-  ADD KEY `medicamento_id` (`medicamento_id`);
+  ADD KEY `paciente_medicamento_1` (`medicamento_id`);
 
 --
 -- Indices de la tabla `paciente_patologia`
 --
 ALTER TABLE `paciente_patologia`
   ADD PRIMARY KEY (`paciente_id`,`patologia_id`),
-  ADD KEY `patologia_id` (`patologia_id`);
+  ADD KEY `paciente_patologia_1` (`patologia_id`);
 
 --
 -- Indices de la tabla `paramedico`
 --
 ALTER TABLE `paramedico`
-  ADD PRIMARY KEY (`id_paramedico`),
-  ADD UNIQUE KEY `correoInst` (`correoInst`),
-  ADD UNIQUE KEY `usuario` (`usuario`);
+  ADD PRIMARY KEY (`id_paramedico`);
 
 --
 -- Indices de la tabla `patologia`
 --
 ALTER TABLE `patologia`
-  ADD PRIMARY KEY (`id_Patologia`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
+  ADD PRIMARY KEY (`id_Patologia`);
 
 --
 -- Indices de la tabla `pupilas`
 --
 ALTER TABLE `pupilas`
-  ADD PRIMARY KEY (`id_Pupilas`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
+  ADD PRIMARY KEY (`id_Pupilas`);
 
 --
 -- Indices de la tabla `reporte`
 --
 ALTER TABLE `reporte`
-  ADD PRIMARY KEY (`id_Reporte`,`numero_unidad`),
-  ADD KEY `lugar_id` (`lugar_id`),
-  ADD KEY `signos_id` (`signos_id`),
-  ADD KEY `nivel_conciencia_id` (`nivel_conciencia_id`);
+  ADD PRIMARY KEY (`id_Reporte`),
+  ADD KEY `reporte_lugar` (`lugar_id`),
+  ADD KEY `reporte_signos` (`signos_id`),
+  ADD KEY `reporte_conciencia` (`nivel_conciencia_id`);
 
 --
 -- Indices de la tabla `reporte_anatomica`
@@ -425,7 +432,7 @@ ALTER TABLE `reporte_lesion`
 -- Indices de la tabla `reporte_pupilas`
 --
 ALTER TABLE `reporte_pupilas`
-  ADD PRIMARY KEY (`paciente_id`,`pupilas_id`),
+  ADD PRIMARY KEY (`reporte_id`,`pupilas_id`),
   ADD KEY `pupilas_id` (`pupilas_id`);
 
 --
@@ -451,6 +458,24 @@ ALTER TABLE `alergia`
   MODIFY `id_Alergia` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `anatomica`
+--
+ALTER TABLE `anatomica`
+  MODIFY `id_Anatomica` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `fotografias`
+--
+ALTER TABLE `fotografias`
+  MODIFY `id_Fotografia` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `insumo`
+--
+ALTER TABLE `insumo`
+  MODIFY `id_Insumo` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `lesion`
 --
 ALTER TABLE `lesion`
@@ -467,6 +492,12 @@ ALTER TABLE `lugar`
 --
 ALTER TABLE `medicamento`
   MODIFY `id_Medicamento` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `nivel_conciencia`
+--
+ALTER TABLE `nivel_conciencia`
+  MODIFY `id_NivelConciencia` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `paciente`
@@ -509,47 +540,53 @@ ALTER TABLE `signos_vitales`
 --
 
 --
+-- Filtros para la tabla `fotografias`
+--
+ALTER TABLE `fotografias`
+  ADD CONSTRAINT `foto_reporte` FOREIGN KEY (`reporte_id`) REFERENCES `reporte` (`id_Reporte`);
+
+--
 -- Filtros para la tabla `paciente_alergia`
 --
 ALTER TABLE `paciente_alergia`
-  ADD CONSTRAINT `paciente_alergia_ibfk_1` FOREIGN KEY (`alergia_id`) REFERENCES `alergia` (`id_Alergia`),
-  ADD CONSTRAINT `paciente_alergia_ibfk_2` FOREIGN KEY (`paciente_id`) REFERENCES `paciente` (`id_Paciente`);
+  ADD CONSTRAINT `paciente_alergia_1` FOREIGN KEY (`alergia_id`) REFERENCES `alergia` (`id_Alergia`),
+  ADD CONSTRAINT `paciente_alergia_2` FOREIGN KEY (`paciente_id`) REFERENCES `paciente` (`id_Paciente`);
 
 --
 -- Filtros para la tabla `paciente_medicamento`
 --
 ALTER TABLE `paciente_medicamento`
-  ADD CONSTRAINT `paciente_medicamento_ibfk_1` FOREIGN KEY (`medicamento_id`) REFERENCES `medicamento` (`id_Medicamento`),
-  ADD CONSTRAINT `paciente_medicamento_ibfk_2` FOREIGN KEY (`paciente_id`) REFERENCES `paciente` (`id_Paciente`);
+  ADD CONSTRAINT `paciente_medicamento_1` FOREIGN KEY (`medicamento_id`) REFERENCES `medicamento` (`id_Medicamento`),
+  ADD CONSTRAINT `paciente_medicamento_2` FOREIGN KEY (`paciente_id`) REFERENCES `paciente` (`id_Paciente`);
 
 --
 -- Filtros para la tabla `paciente_patologia`
 --
 ALTER TABLE `paciente_patologia`
-  ADD CONSTRAINT `paciente_patologia_ibfk_1` FOREIGN KEY (`paciente_id`) REFERENCES `paciente` (`id_Paciente`),
-  ADD CONSTRAINT `paciente_patologia_ibfk_2` FOREIGN KEY (`patologia_id`) REFERENCES `patologia` (`id_Patologia`);
+  ADD CONSTRAINT `paciente_patologia_1` FOREIGN KEY (`patologia_id`) REFERENCES `patologia` (`id_Patologia`),
+  ADD CONSTRAINT `paciente_patologia_2` FOREIGN KEY (`paciente_id`) REFERENCES `paciente` (`id_Paciente`);
 
 --
 -- Filtros para la tabla `reporte`
 --
 ALTER TABLE `reporte`
-  ADD CONSTRAINT `reporte_ibfk_1` FOREIGN KEY (`lugar_id`) REFERENCES `lugar` (`id_Lugar`),
-  ADD CONSTRAINT `reporte_ibfk_2` FOREIGN KEY (`signos_id`) REFERENCES `signos_vitales` (`id_Signos`),
-  ADD CONSTRAINT `reporte_ibfk_3` FOREIGN KEY (`nivel_conciencia_id`) REFERENCES `nivel_conciencia` (`id_NivelConciencia`);
+  ADD CONSTRAINT `reporte_conciencia` FOREIGN KEY (`nivel_conciencia_id`) REFERENCES `nivel_conciencia` (`id_NivelConciencia`),
+  ADD CONSTRAINT `reporte_lugar` FOREIGN KEY (`lugar_id`) REFERENCES `lugar` (`id_Lugar`),
+  ADD CONSTRAINT `reporte_signos` FOREIGN KEY (`signos_id`) REFERENCES `signos_vitales` (`id_Signos`);
 
 --
 -- Filtros para la tabla `reporte_anatomica`
 --
 ALTER TABLE `reporte_anatomica`
-  ADD CONSTRAINT `reporte_anatomica_ibfk_1` FOREIGN KEY (`reporte_id`) REFERENCES `reporte` (`id_Reporte`),
-  ADD CONSTRAINT `reporte_anatomica_ibfk_2` FOREIGN KEY (`anatomica_id`) REFERENCES `anatomica` (`id_Anatomica`);
+  ADD CONSTRAINT `reporte_anatomica_ibfk_1` FOREIGN KEY (`anatomica_id`) REFERENCES `anatomica` (`id_Anatomica`),
+  ADD CONSTRAINT `reporte_anatomica_ibfk_2` FOREIGN KEY (`reporte_id`) REFERENCES `reporte` (`id_Reporte`);
 
 --
 -- Filtros para la tabla `reporte_insumo`
 --
 ALTER TABLE `reporte_insumo`
-  ADD CONSTRAINT `reporte_insumo_ibfk_1` FOREIGN KEY (`reporte_id`) REFERENCES `reporte` (`id_Reporte`),
-  ADD CONSTRAINT `reporte_insumo_ibfk_2` FOREIGN KEY (`insumo_id`) REFERENCES `insumo` (`id_Insumo`);
+  ADD CONSTRAINT `reporte_insumo_ibfk_1` FOREIGN KEY (`insumo_id`) REFERENCES `insumo` (`id_Insumo`),
+  ADD CONSTRAINT `reporte_insumo_ibfk_2` FOREIGN KEY (`reporte_id`) REFERENCES `reporte` (`id_Reporte`);
 
 --
 -- Filtros para la tabla `reporte_lesion`
@@ -562,8 +599,8 @@ ALTER TABLE `reporte_lesion`
 -- Filtros para la tabla `reporte_pupilas`
 --
 ALTER TABLE `reporte_pupilas`
-  ADD CONSTRAINT `reporte_pupilas_ibfk_1` FOREIGN KEY (`paciente_id`) REFERENCES `paciente` (`id_Paciente`),
-  ADD CONSTRAINT `reporte_pupilas_ibfk_2` FOREIGN KEY (`pupilas_id`) REFERENCES `pupilas` (`id_Pupilas`);
+  ADD CONSTRAINT `reporte_pupilas_ibfk_1` FOREIGN KEY (`pupilas_id`) REFERENCES `pupilas` (`id_Pupilas`),
+  ADD CONSTRAINT `reporte_pupilas_ibfk_2` FOREIGN KEY (`reporte_id`) REFERENCES `reporte` (`id_Reporte`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
