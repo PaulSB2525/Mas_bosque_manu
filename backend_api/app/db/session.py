@@ -1,23 +1,23 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+from app.core.config import settings
 
-from app.api.router import router
-
-app = FastAPI(
-    title="FRAP Backend API",
-    version="1.0.0"
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=True
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # luego se puede cerrar
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
 )
 
-app.include_router(router)
+Base = declarative_base()
 
-@app.get("/")
-def root():
-    return {"status": "running"}
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
