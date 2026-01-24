@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.router import api_router
+from app.api.router import router   # 👈 CAMBIO CLAVE
 
 app = FastAPI(
     title="Mas Bosque Manu API",
@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 # Rutas principales
-app.include_router(api_router, prefix="/api")
+app.include_router(router, prefix="/api")  # 👈 CAMBIO CLAVE
 
 # 🔎 Endpoint CLAVE para saber que conectaste bien
 @app.get("/health", tags=["Health"])
