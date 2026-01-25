@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-01-2026 a las 05:46:22
+-- Tiempo de generación: 25-01-2026 a las 20:59:56
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -44,6 +44,13 @@ CREATE TABLE `alergia` (
   `id_Alergia` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `alergia`
+--
+
+INSERT INTO `alergia` (`id_Alergia`, `nombre`) VALUES
+(1, 'Cacahuate');
 
 -- --------------------------------------------------------
 
@@ -140,6 +147,16 @@ CREATE TABLE `paciente` (
   `genero` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `paciente`
+--
+
+INSERT INTO `paciente` (`id_Paciente`, `nombre`, `edad`, `genero`) VALUES
+(1, 'Genaro Mercado Morones', 19, 1),
+(2, '', 19, 1),
+(3, '', 19, 1),
+(4, '', 19, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -150,6 +167,16 @@ CREATE TABLE `paciente_alergia` (
   `paciente_id` int(11) NOT NULL,
   `alergia_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `paciente_alergia`
+--
+
+INSERT INTO `paciente_alergia` (`paciente_id`, `alergia_id`) VALUES
+(1, 1),
+(2, 1),
+(3, 1),
+(4, 1);
 
 -- --------------------------------------------------------
 
@@ -173,6 +200,16 @@ CREATE TABLE `paciente_patologia` (
   `patologia_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `paciente_patologia`
+--
+
+INSERT INTO `paciente_patologia` (`paciente_id`, `patologia_id`) VALUES
+(1, 1),
+(2, 1),
+(3, 1),
+(4, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -189,6 +226,16 @@ CREATE TABLE `paramedico` (
   `firma_paramedico` blob NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `paramedico`
+--
+
+INSERT INTO `paramedico` (`id_paramedico`, `nombre`, `correoInst`, `correoEsc`, `usuario`, `contraseña`, `firma_paramedico`) VALUES
+(1, 'Genaro Mercado Morones', '123@tec.mx', 'Tec@gmail.mx', 'genarinh0', '$2b$10$zaWUrv8HBdGeC42Ymj/0PupUZpAegW7bYrnEsgs7tbD.OqlNRQpj.', ''),
+(2, 'Genaro Mercado Morones', '1234@tec.mx', 'Tec@gmail.mx', 'genarinh8', '$2b$10$pE2rVgLczNDkqGD7JShDbOycObQzdChXFgSNPvijBykArcRLp51bC', ''),
+(3, 'Genaro Mercado', '12364@tec.mx', 'Tec@gmail.mx', 'genarinh9', '$2b$10$tpJ53Pi7PKqGM7S.ONYeHei/1oU/HFjpDa9FqtAJc.BFgiav9pVCa', ''),
+(4, 'Hdkskks', 'Kakaks@gamila.mx', 'Ususkss@gmail.mx', 'genarin9', '$2b$10$nfD4jHQmfT.Lsd9UONDxYeTfPFUcHjfVKfpHk67wV7.ZVe.gYDrCu', '');
+
 -- --------------------------------------------------------
 
 --
@@ -199,6 +246,13 @@ CREATE TABLE `patologia` (
   `id_Patologia` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `patologia`
+--
+
+INSERT INTO `patologia` (`id_Patologia`, `nombre`) VALUES
+(1, 'No');
 
 -- --------------------------------------------------------
 
@@ -231,7 +285,8 @@ CREATE TABLE `reporte` (
   `firma_testigo` blob DEFAULT NULL,
   `lugar_id` int(11) NOT NULL,
   `signos_id` int(11) NOT NULL,
-  `nivel_conciencia_id` int(11) NOT NULL
+  `nivel_conciencia_id` int(11) NOT NULL,
+  `paciente_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -405,7 +460,8 @@ ALTER TABLE `reporte`
   ADD PRIMARY KEY (`id_Reporte`),
   ADD KEY `reporte_lugar` (`lugar_id`),
   ADD KEY `reporte_signos` (`signos_id`),
-  ADD KEY `reporte_conciencia` (`nivel_conciencia_id`);
+  ADD KEY `reporte_conciencia` (`nivel_conciencia_id`),
+  ADD KEY `reporte_paciente` (`paciente_id`);
 
 --
 -- Indices de la tabla `reporte_anatomica`
@@ -455,7 +511,7 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT de la tabla `alergia`
 --
 ALTER TABLE `alergia`
-  MODIFY `id_Alergia` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Alergia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `anatomica`
@@ -503,19 +559,19 @@ ALTER TABLE `nivel_conciencia`
 -- AUTO_INCREMENT de la tabla `paciente`
 --
 ALTER TABLE `paciente`
-  MODIFY `id_Paciente` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Paciente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `paramedico`
 --
 ALTER TABLE `paramedico`
-  MODIFY `id_paramedico` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_paramedico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `patologia`
 --
 ALTER TABLE `patologia`
-  MODIFY `id_Patologia` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Patologia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `pupilas`
@@ -572,6 +628,7 @@ ALTER TABLE `paciente_patologia`
 ALTER TABLE `reporte`
   ADD CONSTRAINT `reporte_conciencia` FOREIGN KEY (`nivel_conciencia_id`) REFERENCES `nivel_conciencia` (`id_NivelConciencia`),
   ADD CONSTRAINT `reporte_lugar` FOREIGN KEY (`lugar_id`) REFERENCES `lugar` (`id_Lugar`),
+  ADD CONSTRAINT `reporte_paciente` FOREIGN KEY (`paciente_id`) REFERENCES `paciente` (`id_Paciente`),
   ADD CONSTRAINT `reporte_signos` FOREIGN KEY (`signos_id`) REFERENCES `signos_vitales` (`id_Signos`);
 
 --
