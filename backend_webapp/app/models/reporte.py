@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, LargeBinary, DateTime, ForeignKey, Text, Boolean
-from backend_webapp.app.databases.connection import Base
+from app.databases.connection import Base
 
 class Reporte(Base):
     __tablename__ = "reporte"

@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, SmallInteger
-from backend_webapp.app.databases.connection import Base
+from app.databases.connection import Base
 
 class Nivel_conciencia(Base):
     __tablename__ = "nivel_conciencia"

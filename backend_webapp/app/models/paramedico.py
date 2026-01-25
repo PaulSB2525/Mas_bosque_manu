@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, LargeBinary
-from backend_webapp.app.databases.connection import Base
+from app.databases.connection import Base
 
 class Paramedico(Base):
     __tablename__ = "paramedico"

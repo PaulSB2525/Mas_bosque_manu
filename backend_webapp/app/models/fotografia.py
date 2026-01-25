@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, LargeBinary
-from backend_webapp.app.databases.connection import Base
+from app.databases.connection import Base
 
 class Fotografia(Base):
     __tablename__ = "fotografia"
