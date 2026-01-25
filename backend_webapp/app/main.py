@@ -22,14 +22,18 @@ app = FastAPI(
 def startup_event():
     test_connection()
 
+origins = [
+    "http://localhost:5173",
+    "http://localhost:8000",
+    "http:localhost:3000",
+    "http://127.0.0.1:5173",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",   # para desarrollo
-        "https://midominio.com"    # producción
-    ],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"],   # GET, POST, PUT, DELETE...
     allow_headers=["*"],
 )
 # Routers
