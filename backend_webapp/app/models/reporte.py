@@ -8,7 +8,7 @@ class Reporte(Base):
     fecha_hora = Column(DateTime, nullable=False)
     observaciones = Column(Text, nullable=True)
     recomendaciones = Column(Text, nullable=True)
-    translado_aceptado = Column(Boolean, nullable=False)
+    traslado_aceptado = Column(Boolean, nullable=False)
     numero_unidad = Column(String(100), nullable=True)
     nombre_operador = Column(String(100), nullable=True)
     firma_operador = Column(LargeBinary, nullable=True)

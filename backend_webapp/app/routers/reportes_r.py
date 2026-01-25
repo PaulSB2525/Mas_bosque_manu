@@ -15,7 +15,7 @@ router = APIRouter(
     tags=["Reportes"]
 )
 
-@router.get("/")
+@router.get("")
 def obtener_reportes(db: Session = Depends(get_db)):
     return db.query(Reporte).all()
 
