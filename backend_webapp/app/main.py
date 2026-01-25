@@ -24,12 +24,14 @@ def startup_event():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",   # para desarrollo
+        "https://midominio.com"    # producción
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Routers
 app.include_router(paciente_router)
 app.include_router(reportes_router)
