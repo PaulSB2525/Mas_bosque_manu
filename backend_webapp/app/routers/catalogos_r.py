@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.databases.connection import get_db
 from app.services.catalogos_services import (
     obtener_alergias,
     obtener_patologias,
@@ -11,9 +12,10 @@ from app.services.catalogos_services import (
     obtener_signos_vitales
 )
 
-from app.databases.connection import get_db
-
-router = APIRouter(prefix="/catalogos", tags=["Catálogos"])
+router = APIRouter(
+    prefix="/catalogos",
+    tags=["Catálogos"]
+)
 
 @router.get("/alergias")
 def get_alergias(db: Session = Depends(get_db)):
@@ -27,7 +29,7 @@ def get_patologias(db: Session = Depends(get_db)):
 def get_pupilas(db: Session = Depends(get_db)):
     return obtener_pupilas(db)
 
-@router.get("/nivel_conciencia")
+@router.get("/nivel-conciencia")
 def get_nivel_conciencia(db: Session = Depends(get_db)):
     return obtener_nivel_conciencia(db)
 
@@ -39,6 +41,6 @@ def get_anatomica(db: Session = Depends(get_db)):
 def get_lugares(db: Session = Depends(get_db)):
     return obtener_lugares(db)
 
-@router.get("/signos_vitales")
+@router.get("/signos-vitales")
 def get_signos_vitales(db: Session = Depends(get_db)):
     return obtener_signos_vitales(db)

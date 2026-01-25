@@ -9,56 +9,21 @@ router = APIRouter(
     tags=["Media"]
 )
 
+def obtener_firma(reporte_id: int, campo: str, db: Session):
+    reporte = db.query(Reporte).filter(Reporte.id_reporte == reporte_id).first()
+    firma = getattr(reporte, campo, None) if reporte else None
+    if not firma:
+        raise HTTPException(404, "Firma no encontrada")
+    return Response(content=firma, media_type="image/png")
+
 @router.get("/reportes/{reporte_id}/firma-operador")
-def get_firma_operador(reporte_id: int, db: Session = Depends(get_db)):
-    reporte = (
-        db.query(Reporte)
-        .filter(Reporte.id_reporte == reporte_id)
-        .first()
-    )
+def firma_operador(reporte_id: int, db: Session = Depends(get_db)):
+    return obtener_firma(reporte_id, "firma_operador", db)
 
-    if not reporte or not reporte.firma_operador:
-        raise HTTPException(status_code=404, detail="Firma del operador no encontrada")
-
-    return Response(
-        content=reporte.firma_operador,
-        media_type="image/png"
-    )
-    
 @router.get("/reportes/{reporte_id}/firma-paciente")
-def get_firma_paciente(
-    reporte_id: int,
-    db: Session = Depends(get_db)
-):
-    reporte = (
-        db.query(Reporte)
-        .filter(Reporte.id_reporte == reporte_id)
-        .first()
-    )
-
-    if not reporte or not reporte.firma_paciente:
-        raise HTTPException(status_code=404, detail="Firma del paciente no encontrada")
-
-    return Response(
-        content=reporte.firma_paciente,
-        media_type="image/png"
-    )
+def firma_paciente(reporte_id: int, db: Session = Depends(get_db)):
+    return obtener_firma(reporte_id, "firma_paciente", db)
 
 @router.get("/reportes/{reporte_id}/firma-testigo")
-def get_firma_testigo(
-    reporte_id: int,
-    db: Session = Depends(get_db)
-):
-    reporte = (
-        db.query(Reporte)
-        .filter(Reporte.id_reporte == reporte_id)
-        .first()
-    )
-
-    if not reporte or not reporte.firma_testigo:
-        raise HTTPException(status_code=404, detail="Firma del testigo no encontrada")
-
-    return Response(
-        content=reporte.firma_testigo,
-        media_type="image/png"
-    )
+def firma_testigo(reporte_id: int, db: Session = Depends(get_db)):
+    return obtener_firma(reporte_id, "firma_testigo", db)
