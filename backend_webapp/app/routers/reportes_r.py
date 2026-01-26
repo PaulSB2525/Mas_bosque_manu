@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.databases.connection import get_db
 
 from app.models.reporte import Reporte
 from app.models.paciente import Paciente
 from app.models.lugar import Lugar
-from app.models.paramedico import Paramedico
 from app.models.signos_vitales import SignosVitales
 from app.models.nivel_conciencia import Nivel_conciencia
 from app.models.reporte_lesion import ReporteLesion
@@ -30,7 +29,6 @@ GENERO_MAP = {
     2: "Femenino",
 }
 
-# ===== RUTA PRINCIPAL =====
 @router.get("/", response_model=list[ReporteResponse])
 def obtener_reportes(db: Session = Depends(get_db)):
     reportes_db = db.query(Reporte).all()
@@ -82,7 +80,7 @@ def obtener_reportes(db: Session = Depends(get_db)):
             .filter(ReporteInsumo.reporte_id == r.id_Reporte)
             .all()
         )
-        insumos = [InsumoOut(nombre=i.nombre, cantidad=ri.ReporteInsumo.insumo_id) for ri, i in insumos_db]
+        insumos = [InsumoOut(nombre=i.nombre, cantidad=i.cantidad) for ri, i in insumos_db]
 
         # lesiones
         lesiones_db = (
@@ -130,9 +128,9 @@ def obtener_reportes(db: Session = Depends(get_db)):
             lesiones=lesiones,
             regionesAfectadas=regiones,
             insumos=insumos,
-            alergias=[],  # aquí si quieres puedes unir PacienteAlergia
-            medicamentos=[],  # paciente medicamentos
-            patologias=[],  # paciente patologías
+            alergias=[],        # Aquí puedes mapear PacienteAlergia si quieres
+            medicamentos=[],    # Aquí mapear PacienteMedicamento
+            patologias=[],      # Aquí mapear PacientePatologia
             trasladoAceptado=r.traslado_aceptado,
             observaciones=r.observaciones,
             recomendaciones=r.recomendaciones,
