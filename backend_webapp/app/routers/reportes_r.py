@@ -15,45 +15,73 @@ router = APIRouter(
     tags=["Reportes"]
 )
 
-@router.get("")
+@router.get("/")
 def obtener_reportes(db: Session = Depends(get_db)):
     return db.query(Reporte).all()
 
 @router.get("/{reporte_id}")
 def obtener_reporte(reporte_id: int, db: Session = Depends(get_db)):
-    reporte = db.query(Reporte).filter(Reporte.id_reporte == reporte_id).first()
+    reporte = (
+        db.query(Reporte)
+        .filter(Reporte.id_Reporte == reporte_id)
+        .first()
+    )
     if not reporte:
         raise HTTPException(404, "Reporte no encontrado")
     return reporte
 
 @router.get("/{reporte_id}/anatomica")
 def anatomica(reporte_id: int, db: Session = Depends(get_db)):
-    return db.query(ReporteAnatomica).filter_by(reporte_id=reporte_id).all()
+    return (
+        db.query(ReporteAnatomica)
+        .filter(ReporteAnatomica.reporte_id == reporte_id)
+        .all()
+    )
 
 @router.get("/{reporte_id}/insumos")
 def insumos(reporte_id: int, db: Session = Depends(get_db)):
-    return db.query(ReporteInsumo).filter_by(reporte_id=reporte_id).all()
+    return (
+        db.query(ReporteInsumo)
+        .filter(ReporteInsumo.reporte_id == reporte_id)
+        .all()
+    )
 
 @router.get("/{reporte_id}/lesiones")
 def lesiones(reporte_id: int, db: Session = Depends(get_db)):
-    return db.query(ReporteLesion).filter_by(reporte_id=reporte_id).all()
+    return (
+        db.query(ReporteLesion)
+        .filter(ReporteLesion.reporte_id == reporte_id)
+        .all()
+    )
 
 @router.get("/{reporte_id}/pupilas")
 def pupilas(reporte_id: int, db: Session = Depends(get_db)):
-    return db.query(ReportePupilas).filter_by(reporte_id=reporte_id).all()
+    return (
+        db.query(ReportePupilas)
+        .filter(ReportePupilas.reporte_id == reporte_id)
+        .all()
+    )
 
 @router.get("/{reporte_id}/pdf")
 def descargar_pdf(reporte_id: int, db: Session = Depends(get_db)):
-    reporte = db.query(Reporte).filter_by(id_reporte=reporte_id).first()
+    reporte = (
+        db.query(Reporte)
+        .filter(Reporte.id_Reporte == reporte_id)
+        .first()
+    )
     if not reporte:
         raise HTTPException(404, "Reporte no encontrado")
 
+    lesiones = db.query(ReporteLesion).filter_by(reporte_id=reporte_id).all()
+    insumos = db.query(ReporteInsumo).filter_by(reporte_id=reporte_id).all()
+    anatomicas = db.query(ReporteAnatomica).filter_by(reporte_id=reporte_id).all()
+
     pdf_path = generar_pdf_reporte(
         reporte=reporte,
-        paciente=reporte.paciente,
-        lesiones=reporte.lesiones,
-        insumos=reporte.insumos,
-        anatomicas=reporte.anatomicas
+        paciente=None,  # luego lo conectamos bien
+        lesiones=lesiones,
+        insumos=insumos,
+        anatomicas=anatomicas
     )
 
     return FileResponse(

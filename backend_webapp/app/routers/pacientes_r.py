@@ -16,7 +16,10 @@ router = APIRouter(
 )
 
 @router.get("/buscar/nombre", response_model=List[PacienteResponse])
-def buscar_paciente(nombre: Optional[str] = None, db: Session = Depends(get_db)):
+def buscar_paciente(
+    nombre: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
     return buscar_paciente_por_nombre(db, nombre)
 
 @router.get("/{id_paciente}", response_model=PacienteResponse)
