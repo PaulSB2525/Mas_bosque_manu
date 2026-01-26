@@ -1,37 +1,66 @@
-# schemas/reportes.py
 from pydantic import BaseModel
+from typing import List, Optional
 from datetime import datetime
-from typing import Optional, List
 
+# -------- SUB-OBJETOS --------
 
-class ReporteBase(BaseModel):
-    id_Reporte: int
-    fecha_hora: datetime
-    traslado_aceptado: bool
-    observaciones: Optional[str]
+class PacienteOut(BaseModel):
+    nombre: str
+    edad: int
+    genero: str
 
-    paciente_id: int
-    lugar_id: int
-    nivel_conciencia_id: int
-    signos_id: int
+class UnidadOut(BaseModel):
+    numero: str
+    operador: str
 
-    model_config = {"from_attributes": True}
+class SignosVitalesOut(BaseModel):
+    temperatura: float
+    fc: int
+    fr: int
+    spo2: int
+    ta: str
+    glu: Optional[int]
 
+class NivelConcienciaOut(BaseModel):
+    ocular: int
+    verbal: int
+    motora: int
+    total: int
 
-class ReporteAnatomicaResponse(BaseModel):
-    anatomica_id: int
-
-    model_config = {"from_attributes": True}
-
-
-class ReporteLesionResponse(BaseModel):
-    lesion_id: int
-
-    model_config = {"from_attributes": True}
-
-
-class ReporteInsumoResponse(BaseModel):
-    insumo_id: int
+class InsumoOut(BaseModel):
+    nombre: str
     cantidad: int
 
-    model_config = {"from_attributes": True}
+class FirmasOut(BaseModel):
+    paciente: bool
+    operador: bool
+    testigo: bool
+
+# -------- REPORTE FINAL --------
+
+class ReporteResponse(BaseModel):
+    id: int
+    fechaHora: datetime
+
+    paciente: PacienteOut
+    lugar: str
+    unidad: UnidadOut
+
+    signosVitales: SignosVitalesOut
+    nivelConciencia: NivelConcienciaOut
+
+    pupilas: List[str]
+    lesiones: List[str]
+    regionesAfectadas: List[str]
+
+    insumos: List[InsumoOut]
+
+    alergias: List[str]
+    medicamentos: List[str]
+    patologias: List[str]
+
+    trasladoAceptado: bool
+    observaciones: Optional[str]
+    recomendaciones: Optional[str]
+
+    firmas: FirmasOut

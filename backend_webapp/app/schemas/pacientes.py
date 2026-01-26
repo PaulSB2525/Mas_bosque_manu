@@ -1,11 +1,11 @@
-# schemas/pacientes.py
 from pydantic import BaseModel
 
-
-class PacienteResponse(BaseModel):
-    id_Paciente: int
+class PacienteCreate(BaseModel):
     nombre: str
     edad: int
-    genero: str
+    genero: int  # 1=Masculino, 2=Femenino, etc.
 
-    model_config = {"from_attributes": True}
+class PacienteUpdate(BaseModel):
+    nombre: str | None = None
+    edad: int | None = None
+    genero: int | None = None
