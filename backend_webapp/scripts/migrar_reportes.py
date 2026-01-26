@@ -1,5 +1,18 @@
 import json
+import os
+import sys
 from datetime import datetime
+
+# -------------------------------------------------
+# 🔧 Fix para que Python encuentre el paquete "app"
+# -------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+# -------------------------------------------------
+# 🔧 Ruta absoluta al archivo reports.json
+# -------------------------------------------------
+JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports.json")
 
 from sqlalchemy.orm import Session
 from app.databases.connection import SessionLocal
@@ -19,6 +32,9 @@ from app.models.insumo import Insumo
 from app.models.reporte_insumo import ReporteInsumo
 
 
+# -------------------------------------------------
+# Utilidades
+# -------------------------------------------------
 def get_or_create(db: Session, model, **kwargs):
     instance = db.query(model).filter_by(**kwargs).first()
     if instance:
@@ -34,10 +50,13 @@ def bool_to_blob(value: bool) -> bytes:
     return b"firmado" if value else b"no_firmado"
 
 
+# -------------------------------------------------
+# Migración principal
+# -------------------------------------------------
 def migrar():
     db = SessionLocal()
 
-    with open("reports.json", "r", encoding="utf-8") as f:
+    with open(JSON_PATH, "r", encoding="utf-8") as f:
         reports = json.load(f)
 
     for r in reports:
