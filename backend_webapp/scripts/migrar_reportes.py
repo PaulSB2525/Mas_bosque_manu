@@ -91,13 +91,14 @@ def migrar():
         ta = r["signosVitales"]["ta"] if r["signosVitales"]["ta"] else "0/0"
 
         sv = SignosVitales(
-            Temp=r["signosVitales"]["temperatura"],
-            FC=r["signosVitales"]["fc"],
-            FR=r["signosVitales"]["fr"],
-            SpO2=r["signosVitales"]["spo2"] or 0,   # CORRECTO: coincide con el campo en la BD
-            **{"T/A": r["signosVitales"]["ta"] or "0/0"},  # Necesario porque 'T/A' no es un identificador válido en Python
-            GLU=r["signosVitales"]["glu"] or 0
+            Temp=r["signosVitales"]["temperatura"] or 0,
+            FC=r["signosVitales"]["fc"] or 0,
+            FR=r["signosVitales"]["fr"] or 0,
+            SpO2=r["signosVitales"]["spo2"] or 0,
+            GLU=r["signosVitales"]["glu"] or 0,
+            **{"T/A": r["signosVitales"]["ta"] or "0/0"}  # <--- así funciona para Python
         )
+        
         db.add(sv)
         db.commit()
         db.refresh(sv)
