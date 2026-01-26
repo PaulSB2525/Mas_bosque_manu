@@ -4,7 +4,12 @@ from app.databases.connection import Base
 class Nivel_conciencia(Base):
     __tablename__ = "nivel_conciencia"
     
-    id_NivelConciencia = Column(Integer, primary_key=True, index=True, nullable = False)
+    id_Nivel_Conciencia = Column(
+        "id_NivelConciencia",
+        Integer,
+        primary_key=True,
+        autoincrement=True
+    )
     motora = Column(SmallInteger, index = True, nullable = False)
     verbal = Column(SmallInteger, index = True, nullable = False)
     ocular = Column(SmallInteger, index = True, nullable = False)
