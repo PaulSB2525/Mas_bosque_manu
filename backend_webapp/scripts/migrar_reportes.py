@@ -75,7 +75,7 @@ def migrar():
             Paciente,
             nombre=r["paciente"]["nombre"],
             edad=r["paciente"]["edad"],
-            genero=GENERO_MAP.get(r["paciente"]["genero"], 0)  # 0 = desconocido
+            genero=GENERO_MAP.get(r["paciente"]["genero"], 0)
         )
 
         # -------------------------
@@ -86,10 +86,6 @@ def migrar():
         # -------------------------
         # Signos vitales
         # -------------------------
-        # Asegurar valores por defecto si vienen como None
-        glu = r["signosVitales"]["glu"] if r["signosVitales"]["glu"] is not None else 0
-        ta = r["signosVitales"]["ta"] if r["signosVitales"]["ta"] else "0/0"
-
         sv = SignosVitales(
             Temp=r["signosVitales"]["temperatura"] or 0,
             FC=r["signosVitales"]["fc"] or 0,
@@ -98,7 +94,6 @@ def migrar():
             GLU=r["signosVitales"]["glu"] or 0,
             TA=r["signosVitales"]["ta"] or "0/0"
         )
-        
         db.add(sv)
         db.commit()
         db.refresh(sv)
@@ -133,7 +128,7 @@ def migrar():
 
             lugar_id=lugar.id_Lugar,
             signos_id=sv.id_Signos,
-            nivel_conciencia_id=nc.id_Nivel_Conciencia,
+            nivel_conciencia_id=nc.id_NivelConciencia,
             paciente_id=paciente.id_Paciente
         )
         db.add(reporte)
@@ -146,7 +141,7 @@ def migrar():
         for p in r.get("pupilas", []):
             pupila = get_or_create(db, Pupilas, nombre=p)
             db.add(ReportePupilas(
-                reporte_id=reporte.id_reporte,
+                reporte_id=reporte.id_Reporte,
                 pupilas_id=pupila.id_Pupilas
             ))
 
@@ -156,7 +151,7 @@ def migrar():
         for l in r.get("lesiones", []):
             lesion = get_or_create(db, Lesion, nombre=l)
             db.add(ReporteLesion(
-                reporte_id=reporte.id_reporte,
+                reporte_id=reporte.id_Reporte,
                 lesion_id=lesion.id_lesion
             ))
 
@@ -166,7 +161,7 @@ def migrar():
         for a in r.get("regionesAfectadas", []):
             anatomica = get_or_create(db, Anatomica, nombre=a)
             db.add(ReporteAnatomica(
-                reporte_id=reporte.id_reporte,
+                reporte_id=reporte.id_Reporte,
                 anatomica_id=anatomica.id_Anatomica
             ))
 
@@ -181,7 +176,7 @@ def migrar():
                 cantidad=i["cantidad"]
             )
             db.add(ReporteInsumo(
-                reporte_id=reporte.id_reporte,
+                reporte_id=reporte.id_Reporte,
                 insumo_id=insumo.id_Insumo
             ))
 
