@@ -146,7 +146,7 @@ def migrar():
         for p in r.get("pupilas", []):
             pupila = get_or_create(db, Pupilas, nombre=p)
             db.add(ReportePupilas(
-                paciente_id=paciente.id_Paciente,
+                reporte_id=reporte.id_reporte,
                 pupilas_id=pupila.id_Pupilas
             ))
 
