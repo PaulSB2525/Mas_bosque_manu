@@ -31,6 +31,13 @@ from app.models.reporte_anatomica import ReporteAnatomica
 from app.models.insumo import Insumo
 from app.models.reporte_insumo import ReporteInsumo
 
+# -------------------------------------------------
+# Mapeo temporal para género
+# -------------------------------------------------
+GENERO_MAP = {
+    "Masculino": 1,
+    "Femenino": 2
+}
 
 # -------------------------------------------------
 # Utilidades
@@ -68,7 +75,7 @@ def migrar():
             Paciente,
             nombre=r["paciente"]["nombre"],
             edad=r["paciente"]["edad"],
-            genero=r["paciente"]["genero"]
+            genero=GENERO_MAP.get(r["paciente"]["genero"], 0)  # 0 = desconocido
         )
 
         # -------------------------
