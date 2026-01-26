@@ -86,14 +86,18 @@ def migrar():
         # -------------------------
         # Signos vitales
         # -------------------------
+        # Asegurar valores por defecto si vienen como None
+        glu = r["signosVitales"]["glu"] if r["signosVitales"]["glu"] is not None else 0
+        ta = r["signosVitales"]["ta"] if r["signosVitales"]["ta"] else "0/0"
+
         sv = SignosVitales(
             Temp=r["signosVitales"]["temperatura"],
             FC=r["signosVitales"]["fc"],
             FR=r["signosVitales"]["fr"],
             Sp02=r["signosVitales"]["spo2"],
-            TA=r["signosVitales"]["ta"],
-            GLU=r["signosVitales"]["glu"]
-        )
+            TA=ta,
+            GLU=glu
+)
         db.add(sv)
         db.commit()
         db.refresh(sv)
