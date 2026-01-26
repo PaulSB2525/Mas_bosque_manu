@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, SmallInteger
+from sqlalchemy import Column, Integer, SmallInteger
 from app.databases.connection import Base
 
 class Nivel_conciencia(Base):
@@ -10,7 +10,7 @@ class Nivel_conciencia(Base):
         primary_key=True,
         autoincrement=True
     )
-    motora = Column(SmallInteger, index = True, nullable = False)
-    verbal = Column(SmallInteger, index = True, nullable = False)
-    ocular = Column(SmallInteger, index = True, nullable = False)
-    total = Column(Integer, index = True, nullable = False)
+    motora = Column(SmallInteger, nullable=False)
+    verbal = Column(SmallInteger, nullable=False)
+    ocular = Column(SmallInteger, nullable=False)
+    total = Column(Integer, nullable=False)
