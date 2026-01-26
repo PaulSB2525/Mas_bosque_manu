@@ -1,62 +1,144 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-
 from app.databases.connection import get_db
+
 from app.models.reporte import Reporte
+from app.models.paciente import Paciente
+from app.models.lugar import Lugar
+from app.models.paramedico import Paramedico
+from app.models.signos_vitales import SignosVitales
+from app.models.nivel_conciencia import Nivel_conciencia
+from app.models.reporte_lesion import ReporteLesion
 from app.models.reporte_anatomica import ReporteAnatomica
 from app.models.reporte_insumo import ReporteInsumo
-from app.models.reporte_lesion import ReporteLesion
 from app.models.reporte_pupilas import ReportePupilas
+from app.models.insumo import Insumo
+from app.models.lesion import Lesion
+from app.models.anatomica import Anatomica
+from app.models.pupilas import Pupilas
+
+from app.schemas.reportes import ReporteResponse, PacienteOut, UnidadOut, SignosVitalesOut, NivelConcienciaOut, InsumoOut, FirmasOut
 
 router = APIRouter(
     prefix="/reportes",
     tags=["Reportes"]
 )
 
-@router.get("/")
+# ===== MAPEO DE GENERO =====
+GENERO_MAP = {
+    1: "Masculino",
+    2: "Femenino",
+}
+
+# ===== RUTA PRINCIPAL =====
+@router.get("/", response_model=list[ReporteResponse])
 def obtener_reportes(db: Session = Depends(get_db)):
-    return db.query(Reporte).all()
+    reportes_db = db.query(Reporte).all()
+    result = []
 
-@router.get("/{reporte_id}")
-def obtener_reporte(reporte_id: int, db: Session = Depends(get_db)):
-    reporte = (
-        db.query(Reporte)
-        .filter(Reporte.id_Reporte == reporte_id)
-        .first()
-    )
-    if not reporte:
-        raise HTTPException(404, "Reporte no encontrado")
-    return reporte
+    for r in reportes_db:
+        # paciente
+        paciente_db = db.query(Paciente).filter(Paciente.id_Paciente == r.paciente_id).first()
+        paciente = PacienteOut(
+            nombre=paciente_db.nombre,
+            edad=paciente_db.edad,
+            genero=GENERO_MAP.get(paciente_db.genero, "Desconocido")
+        )
 
-@router.get("/{reporte_id}/anatomica")
-def anatomica(reporte_id: int, db: Session = Depends(get_db)):
-    return (
-        db.query(ReporteAnatomica)
-        .filter(ReporteAnatomica.reporte_id == reporte_id)
-        .all()
-    )
+        # lugar
+        lugar_db = db.query(Lugar).filter(Lugar.id_Lugar == r.lugar_id).first()
+        lugar = lugar_db.nombre if lugar_db else "Desconocido"
 
-@router.get("/{reporte_id}/insumos")
-def insumos(reporte_id: int, db: Session = Depends(get_db)):
-    return (
-        db.query(ReporteInsumo)
-        .filter(ReporteInsumo.reporte_id == reporte_id)
-        .all()
-    )
+        # unidad / operador
+        unidad = UnidadOut(
+            numero=r.numero_unidad,
+            operador=r.nombre_operador
+        )
 
-@router.get("/{reporte_id}/lesiones")
-def lesiones(reporte_id: int, db: Session = Depends(get_db)):
-    return (
-        db.query(ReporteLesion)
-        .filter(ReporteLesion.reporte_id == reporte_id)
-        .all()
-    )
+        # signos vitales
+        signos_db = db.query(SignosVitales).filter(SignosVitales.id_Signos == r.signos_id).first()
+        signos = SignosVitalesOut(
+            temperatura=signos_db.Temp,
+            fc=signos_db.FC,
+            fr=signos_db.FR,
+            spo2=signos_db.SpO2,
+            ta=signos_db.TA,
+            glu=signos_db.GLU
+        )
 
-@router.get("/{reporte_id}/pupilas")
-def pupilas(reporte_id: int, db: Session = Depends(get_db)):
-    return (
-        db.query(ReportePupilas)
-        .filter(ReportePupilas.reporte_id == reporte_id)
-        .all()
-    )
+        # nivel conciencia
+        nivel_db = db.query(Nivel_conciencia).filter(Nivel_conciencia.id_Nivel_Conciencia == r.nivel_conciencia_id).first()
+        nivel = NivelConcienciaOut(
+            ocular=nivel_db.ocular,
+            verbal=nivel_db.verbal,
+            motora=nivel_db.motora,
+            total=nivel_db.total
+        )
+
+        # insumos
+        insumos_db = (
+            db.query(ReporteInsumo, Insumo)
+            .join(Insumo, Insumo.id_Insumo == ReporteInsumo.insumo_id)
+            .filter(ReporteInsumo.reporte_id == r.id_Reporte)
+            .all()
+        )
+        insumos = [InsumoOut(nombre=i.nombre, cantidad=ri.ReporteInsumo.insumo_id) for ri, i in insumos_db]
+
+        # lesiones
+        lesiones_db = (
+            db.query(ReporteLesion, Lesion)
+            .join(Lesion, Lesion.id_lesion == ReporteLesion.lesion_id)
+            .filter(ReporteLesion.reporte_id == r.id_Reporte)
+            .all()
+        )
+        lesiones = [l.nombre for rl, l in lesiones_db]
+
+        # regiones afectadas
+        anatomica_db = (
+            db.query(ReporteAnatomica, Anatomica)
+            .join(Anatomica, Anatomica.id_Anatomica == ReporteAnatomica.anatomica_id)
+            .filter(ReporteAnatomica.reporte_id == r.id_Reporte)
+            .all()
+        )
+        regiones = [a.nombre for ra, a in anatomica_db]
+
+        # pupilas
+        pupilas_db = (
+            db.query(ReportePupilas, Pupilas)
+            .join(Pupilas, Pupilas.id_Pupilas == ReportePupilas.pupilas_id)
+            .filter(ReportePupilas.reporte_id == r.id_Reporte)
+            .all()
+        )
+        pupilas = [p.nombre for rp, p in pupilas_db]
+
+        # firmas
+        firmas = FirmasOut(
+            paciente=bool(r.firma_paciente),
+            operador=bool(r.firma_operador),
+            testigo=bool(r.firma_testigo)
+        )
+
+        reporte_out = ReporteResponse(
+            id=r.id_Reporte,
+            fechaHora=r.fecha_hora,
+            paciente=paciente,
+            lugar=lugar,
+            unidad=unidad,
+            signosVitales=signos,
+            nivelConciencia=nivel,
+            pupilas=pupilas,
+            lesiones=lesiones,
+            regionesAfectadas=regiones,
+            insumos=insumos,
+            alergias=[],  # aquí si quieres puedes unir PacienteAlergia
+            medicamentos=[],  # paciente medicamentos
+            patologias=[],  # paciente patologías
+            trasladoAceptado=r.traslado_aceptado,
+            observaciones=r.observaciones,
+            recomendaciones=r.recomendaciones,
+            firmas=firmas
+        )
+
+        result.append(reporte_out)
+
+    return result
