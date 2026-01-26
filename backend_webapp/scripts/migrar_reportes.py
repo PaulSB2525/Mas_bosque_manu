@@ -128,7 +128,7 @@ def migrar():
 
             lugar_id=lugar.id_Lugar,
             signos_id=sv.id_Signos,
-            nivel_conciencia_id=nc.id_NivelConciencia,
+            nivel_conciencia_id=nc.id_Nivel_Conciencia,
             paciente_id=paciente.id_Paciente
         )
         db.add(reporte)
