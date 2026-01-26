@@ -94,10 +94,10 @@ def migrar():
             Temp=r["signosVitales"]["temperatura"],
             FC=r["signosVitales"]["fc"],
             FR=r["signosVitales"]["fr"],
-            Sp02=r["signosVitales"]["spo2"],
-            TA=ta,
-            GLU=glu
-)
+            SpO2=r["signosVitales"]["spo2"] or 0,   # CORRECTO: coincide con el campo en la BD
+            **{"T/A": r["signosVitales"]["ta"] or "0/0"},  # Necesario porque 'T/A' no es un identificador válido en Python
+            GLU=r["signosVitales"]["glu"] or 0
+        )
         db.add(sv)
         db.commit()
         db.refresh(sv)
