@@ -7,10 +7,7 @@ const validarSchema = (schema) => {
             const resultado = schema.safeParse(req.body);
             
             if (!resultado.success) {
-                const errores = resultado.error.errors.map(err => ({
-                    campo: err.path.join("."),
-                    mensaje: err.message
-                }));
+                const errores = resultado.error;
                 
                 return res.status(400).json({
                     success: false,
@@ -47,6 +44,8 @@ const sanitizarInput = (obj) => {
             sanitizado[key] = value;
         }
     }
+
+    console.log(sanitizado);
     
     return sanitizado;
 };

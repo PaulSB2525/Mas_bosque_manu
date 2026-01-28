@@ -13,8 +13,10 @@ const {
     obtenerFirmaParamedico
 } = require("../controllers/paramedicos");
 
+router.post("/", sanitizarDatos, validarSchema(paramedicoSchema.crear), crearParamedico);
+
+
 // Protegidas - Solo admins pueden gestionar paramedicos
-router.post("/", verificarToken, verificarAdmin, sanitizarDatos, validarSchema(paramedicoSchema.crear), crearParamedico);
 router.get("/", verificarToken, verificarAdmin, obtenerParamedicos);
 router.get("/:id", verificarToken, verificarAdmin, obtenerParamedicoPorId);
 router.get("/:id/firma", verificarToken, verificarParamedico, obtenerFirmaParamedico);

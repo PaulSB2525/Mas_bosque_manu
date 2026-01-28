@@ -1,5 +1,8 @@
 const { z } = require("zod");
 
+//por ahora no tan estricto con schema
+//regex(/^data:image\/[a-zA-Z]+;base64,/, "Formato de firma inválido")
+
 // Schema para insumos
 const insumoSchema = z.object({
     nombre: z.string()
@@ -14,27 +17,28 @@ const insumoSchema = z.object({
 // Schema para signos vitales
 const signosVitalesSchema = z.object({
     Temp: z.number()
-        .int("Temperatura debe ser un número")
-        .min(30, "Temperatura mínima: 30°C")
-        .max(45, "Temperatura máxima: 45°C"),
+        .int("Temperatura debe ser un número"),
+        
+        //.min(30, "Temperatura mínima: 30°C")
+        //.max(45, "Temperatura máxima: 45°C"),
     FC: z.number()
-        .int("Frecuencia cardíaca debe ser un número")
-        .min(30, "FC mínima: 30 lpm")
-        .max(250, "FC máxima: 250 lpm"),
+        .int("Frecuencia cardíaca debe ser un número"),
+        //.min(30, "FC mínima: 30 lpm")
+        //.max(250, "FC máxima: 250 lpm"),
     FR: z.number()
-        .int("Frecuencia respiratoria debe ser un número")
-        .min(6, "FR mínima: 6 rpm")
-        .max(60, "FR máxima: 60 rpm"),
+        .int("Frecuencia respiratoria debe ser un número"),
+        //.min(6, "FR mínima: 6 rpm")
+        //.max(60, "FR máxima: 60 rpm"),
     SpO2: z.number()
-        .int("SpO2 debe ser un número")
-        .min(60, "SpO2 mínima: 60%")
-        .max(100, "SpO2 máxima: 100%"),
+        .int("SpO2 debe ser un número"),
+        //.min(60, "SpO2 mínima: 60%")
+        //.max(100, "SpO2 máxima: 100%"),
     T_A: z.string()
         .regex(/^\d{2,3}\/\d{2,3}$/, "Formato de presión arterial inválido (ej: 120/80)"),
     GLU: z.number()
         .int("Glucosa debe ser un número")
-        .min(30, "Glucosa mínima: 30 mg/dL")
-        .max(600, "Glucosa máxima: 600 mg/dL")
+        //.min(30, "Glucosa mínima: 30 mg/dL")
+        //.max(600, "Glucosa máxima: 600 mg/dL")
 });
 
 // Schema para nivel de conciencia (Glasgow)
@@ -87,8 +91,9 @@ const reporteSchema = {
         
         // Información del traslado
         numero_unidad: z.string()
-            .min(1, "Número de unidad requerido")
-            .max(50, "Número de unidad muy largo"),
+            .max(50, "Número de unidad muy largo")
+            .optional()
+            .default(0),
         
         nombre_operador: z.string()
             .max(100, "Nombre de operador muy largo")
@@ -96,12 +101,10 @@ const reporteSchema = {
             .default(""),
         
         firma_operador: z.string()
-            .regex(/^data:image\/[a-zA-Z]+;base64,/, "Formato de firma inválido")
             .optional()
             .default(""),
         
-        firma_paciente: z.string()
-            .regex(/^data:image\/[a-zA-Z]+;base64,/, "Formato de firma inválido"),
+        firma_paciente: z.string(),
         
         nombre_testigo: z.string()
             .max(100, "Nombre de testigo muy largo")
@@ -109,7 +112,6 @@ const reporteSchema = {
             .default(""),
         
         firma_testigo: z.string()
-            .regex(/^data:image\/[a-zA-Z]+;base64,/, "Formato de firma inválido")
             .optional()
             .default(""),
         

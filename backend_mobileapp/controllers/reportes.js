@@ -153,19 +153,17 @@ const crearReporte = async (req, res) => {
         // 6. Procesar insumos
         if (insumos && insumos.length > 0) {
             for (const insumo of insumos) {
-                // Insertar o obtener insumo
-                const insumoId = await insertarObtenerId('insumo', insumo.nombre, 'id_Insumo');
-                
-                // Actualizar cantidad
-                await db.query(
-                    "UPDATE insumo SET cantidad = cantidad - ? WHERE id_Insumo = ?",
-                    [insumo.cantidad, insumoId]
-                );
+                const [resultado] = await db.query(
+                        "INSERT INTO insumo (nombre, cantidad) VALUES (?, ?)",
+                        [insumo.nombre, insumo.cantidad]
+                    );
+
+                const insumoId = resultado.insertId;
                 
                 // Relacionar con reporte
                 await db.query(
-                    "INSERT INTO reporte_insumo (reporte_id, insumo_id, cantidad_usada) VALUES (?, ?, ?)",
-                    [reporteId, insumoId, insumo.cantidad]
+                    "INSERT INTO reporte_insumo (reporte_id, insumo_id) VALUES (?, ?)",
+                    [reporteId, insumoId]
                 );
             }
         }

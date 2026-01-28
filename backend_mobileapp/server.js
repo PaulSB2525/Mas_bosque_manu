@@ -70,7 +70,7 @@ app.use("/api/admins", adminRoutes);
 app.use("/api/pacientes", pacientesRoutes);
 app.use("/api/paramedicos", paramedicoRoutes);
 app.use("/api/reportes", reportesRoutes);
-app.use("/api/auth/paramedicos", authParamedicosRoutes);
+app.use("/api/authParamedicos", authParamedicosRoutes);
 
 // Ruta de salud
 app.get("/api/health", (req, res) => {

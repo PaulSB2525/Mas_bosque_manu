@@ -21,7 +21,7 @@ const crearParamedico = async (req, res) => {
         const hash = await bcrypt.hash(contrasena, 10);
 
         // Convertir firma a Buffer
-        const firmaBuffer = base64ABuffer(firma_paramedico);
+        const firmaBuffer = firma_paramedico ? base64ABuffer(firma_paramedico) : '';
 
         // Insertar paramédico
         const [resultado] = await db.query(

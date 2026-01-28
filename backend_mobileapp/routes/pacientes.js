@@ -14,7 +14,10 @@ const {
 } = require("../controllers/pacientes");
 
 // Protegidas - Paramedicos
-router.post("/", verificarToken, verificarParamedico, sanitizarDatos, validarSchema(pacienteSchema.crear), crearPaciente);
+//por el momento sin token
+//router.post("/", verificarToken, verificarParamedico, sanitizarDatos, validarSchema(pacienteSchema.crear), crearPaciente);
+router.post("/", sanitizarDatos, validarSchema(pacienteSchema.crear), crearPaciente);
+
 router.get("/", verificarToken, verificarParamedico, obtenerPacientes);
 router.get("/buscar", verificarToken, verificarParamedico, buscarPacientes);
 router.get("/:id", verificarToken, verificarParamedico, obtenerPacientePorId);

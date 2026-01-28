@@ -5,10 +5,10 @@ const paramedicoSchema = {
         nombre: z.string()
             .min(2, "Nombre debe tener al menos 2 caracteres")
             .max(100, "Nombre no puede exceder 100 caracteres"),
-        correoInst: z.string()
+        correoInst: z
             .email("Correo institucional inválido")
             .max(100, "Correo no puede exceder 100 caracteres"),
-        correoEsc: z.string()
+        correoEsc: z
             .email("Correo escolar inválido")
             .max(100, "Correo no puede exceder 100 caracteres")
             .optional(),
@@ -24,6 +24,7 @@ const paramedicoSchema = {
         firma_paramedico: z.string()
             .min(10, "Firma inválida")
             .regex(/^data:image\/[a-zA-Z]+;base64,/, "Formato de imagen inválido")
+            .optional()
     }),
     
     actualizar: z.object({
@@ -31,11 +32,11 @@ const paramedicoSchema = {
             .min(2)
             .max(100)
             .optional(),
-        correoInst: z.string()
+        correoInst: z
             .email()
             .max(100)
             .optional(),
-        correoEsc: z.string()
+        correoEsc: z
             .email()
             .max(100)
             .optional(),

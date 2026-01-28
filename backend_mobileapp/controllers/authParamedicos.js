@@ -32,6 +32,7 @@ const loginParamedico = async (req, res) => {
         }
 
         // Generar token JWT
+        /*
         const token = jwt.sign(
             {
                 id: paramedico.id_paramedico,
@@ -42,12 +43,13 @@ const loginParamedico = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: "24h" }
         );
+        */
 
         // Remover contraseña de la respuesta
         delete paramedico.contraseña;
 
         return respuestaExitosa(res, {
-            token,
+            //token,
             usuario: paramedico,
             expira: "24h"
         }, "Login exitoso");
