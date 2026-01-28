@@ -60,7 +60,7 @@ def obtener_reportes(db: Session = Depends(get_db)):
             fc=signos_db.FC,
             fr=signos_db.FR,
             spo2=signos_db.SpO2,
-            ta=signos_db.TA,
+            ta=signos_db.T_A,
             glu=signos_db.GLU
         )
 

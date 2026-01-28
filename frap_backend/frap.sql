@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 25-01-2026 a las 20:59:56
+-- Tiempo de generación: 28-01-2026 a las 22:32:11
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -44,13 +44,6 @@ CREATE TABLE `alergia` (
   `id_Alergia` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `alergia`
---
-
-INSERT INTO `alergia` (`id_Alergia`, `nombre`) VALUES
-(1, 'Cacahuate');
 
 -- --------------------------------------------------------
 
@@ -147,16 +140,6 @@ CREATE TABLE `paciente` (
   `genero` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `paciente`
---
-
-INSERT INTO `paciente` (`id_Paciente`, `nombre`, `edad`, `genero`) VALUES
-(1, 'Genaro Mercado Morones', 19, 1),
-(2, '', 19, 1),
-(3, '', 19, 1),
-(4, '', 19, 1);
-
 -- --------------------------------------------------------
 
 --
@@ -167,16 +150,6 @@ CREATE TABLE `paciente_alergia` (
   `paciente_id` int(11) NOT NULL,
   `alergia_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `paciente_alergia`
---
-
-INSERT INTO `paciente_alergia` (`paciente_id`, `alergia_id`) VALUES
-(1, 1),
-(2, 1),
-(3, 1),
-(4, 1);
 
 -- --------------------------------------------------------
 
@@ -200,16 +173,6 @@ CREATE TABLE `paciente_patologia` (
   `patologia_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `paciente_patologia`
---
-
-INSERT INTO `paciente_patologia` (`paciente_id`, `patologia_id`) VALUES
-(1, 1),
-(2, 1),
-(3, 1),
-(4, 1);
-
 -- --------------------------------------------------------
 
 --
@@ -226,16 +189,6 @@ CREATE TABLE `paramedico` (
   `firma_paramedico` blob NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `paramedico`
---
-
-INSERT INTO `paramedico` (`id_paramedico`, `nombre`, `correoInst`, `correoEsc`, `usuario`, `contraseña`, `firma_paramedico`) VALUES
-(1, 'Genaro Mercado Morones', '123@tec.mx', 'Tec@gmail.mx', 'genarinh0', '$2b$10$zaWUrv8HBdGeC42Ymj/0PupUZpAegW7bYrnEsgs7tbD.OqlNRQpj.', ''),
-(2, 'Genaro Mercado Morones', '1234@tec.mx', 'Tec@gmail.mx', 'genarinh8', '$2b$10$pE2rVgLczNDkqGD7JShDbOycObQzdChXFgSNPvijBykArcRLp51bC', ''),
-(3, 'Genaro Mercado', '12364@tec.mx', 'Tec@gmail.mx', 'genarinh9', '$2b$10$tpJ53Pi7PKqGM7S.ONYeHei/1oU/HFjpDa9FqtAJc.BFgiav9pVCa', ''),
-(4, 'Hdkskks', 'Kakaks@gamila.mx', 'Ususkss@gmail.mx', 'genarin9', '$2b$10$nfD4jHQmfT.Lsd9UONDxYeTfPFUcHjfVKfpHk67wV7.ZVe.gYDrCu', '');
-
 -- --------------------------------------------------------
 
 --
@@ -246,13 +199,6 @@ CREATE TABLE `patologia` (
   `id_Patologia` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `patologia`
---
-
-INSERT INTO `patologia` (`id_Patologia`, `nombre`) VALUES
-(1, 'No');
 
 -- --------------------------------------------------------
 
@@ -345,7 +291,7 @@ CREATE TABLE `signos_vitales` (
   `FC` int(11) NOT NULL,
   `FR` int(11) NOT NULL,
   `SpO2` int(11) NOT NULL,
-  `T/A` varchar(100) NOT NULL,
+  `T_A` varchar(100) NOT NULL,
   `GLU` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -511,13 +457,13 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT de la tabla `alergia`
 --
 ALTER TABLE `alergia`
-  MODIFY `id_Alergia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_Alergia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `anatomica`
 --
 ALTER TABLE `anatomica`
-  MODIFY `id_Anatomica` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Anatomica` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `fotografias`
@@ -529,67 +475,67 @@ ALTER TABLE `fotografias`
 -- AUTO_INCREMENT de la tabla `insumo`
 --
 ALTER TABLE `insumo`
-  MODIFY `id_Insumo` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Insumo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `lesion`
 --
 ALTER TABLE `lesion`
-  MODIFY `id_Lesion` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Lesion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `lugar`
 --
 ALTER TABLE `lugar`
-  MODIFY `id_Lugar` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Lugar` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de la tabla `medicamento`
 --
 ALTER TABLE `medicamento`
-  MODIFY `id_Medicamento` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Medicamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `nivel_conciencia`
 --
 ALTER TABLE `nivel_conciencia`
-  MODIFY `id_NivelConciencia` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_NivelConciencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT de la tabla `paciente`
 --
 ALTER TABLE `paciente`
-  MODIFY `id_Paciente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_Paciente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT de la tabla `paramedico`
 --
 ALTER TABLE `paramedico`
-  MODIFY `id_paramedico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_paramedico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `patologia`
 --
 ALTER TABLE `patologia`
-  MODIFY `id_Patologia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_Patologia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `pupilas`
 --
 ALTER TABLE `pupilas`
-  MODIFY `id_Pupilas` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Pupilas` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `reporte`
 --
 ALTER TABLE `reporte`
-  MODIFY `id_Reporte` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Reporte` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `signos_vitales`
 --
 ALTER TABLE `signos_vitales`
-  MODIFY `id_Signos` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_Signos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- Restricciones para tablas volcadas

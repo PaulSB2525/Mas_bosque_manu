@@ -9,5 +9,5 @@ class SignosVitales(Base):
     FC = Column(Integer, nullable=False)
     FR = Column(Integer, nullable=False)
     SpO2 = Column(Integer, nullable=False)
-    TA = Column("T/A", String(100), nullable=False)
+    T_A = Column(String(100), nullable=False)
     GLU = Column(Integer)
