@@ -152,7 +152,7 @@ def migrar():
             lesion = get_or_create(db, Lesion, nombre=l)
             db.add(ReporteLesion(
                 reporte_id=reporte.id_Reporte,
-                lesion_id=lesion.id_lesion
+                lesion_id=lesion.id_Lesion
             ))
 
         # -------------------------
