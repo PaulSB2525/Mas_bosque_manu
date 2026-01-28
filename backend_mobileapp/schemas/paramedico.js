@@ -9,9 +9,13 @@ const paramedicoSchema = {
             .email("Correo institucional inválido")
             .max(100, "Correo no puede exceder 100 caracteres"),
         correoEsc: z
-            .email("Correo escolar inválido")
-            .max(100, "Correo no puede exceder 100 caracteres")
-            .optional(),
+            .union([
+                z.literal(''),  // Permite string vacío
+                z.email("Correo escolar inválido")
+                .max(100, "Correo no puede exceder 100 caracteres")
+            ])
+            .optional()
+            .default(''),
         usuario: z.string()
             .min(4, "Usuario debe tener al menos 4 caracteres")
             .max(50, "Usuario no puede exceder 50 caracteres")

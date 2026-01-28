@@ -26,7 +26,7 @@ const crearParamedico = async (req, res) => {
         // Insertar paramédico
         const [resultado] = await db.query(
             "INSERT INTO paramedico (nombre, correoInst, correoEsc, usuario, contraseña, firma_paramedico) VALUES (?, ?, ?, ?, ?, ?)",
-            [nombre, correoInst, correoEsc || null, usuario, hash, firmaBuffer]
+            [nombre, correoInst, correoEsc, usuario, hash, firmaBuffer]
         );
 
         return respuestaExitosa(res, { id: resultado.insertId }, "Paramédico creado exitosamente", 201);
