@@ -92,7 +92,7 @@ def migrar():
             FR=r["signosVitales"]["fr"] or 0,
             SpO2=r["signosVitales"]["spo2"] or 0,
             GLU=r["signosVitales"]["glu"] or 0,
-            TA=r["signosVitales"]["ta"] or "0/0"
+            T_A=r["signosVitales"]["ta"] or "0/0"
         )
         db.add(sv)
         db.commit()
