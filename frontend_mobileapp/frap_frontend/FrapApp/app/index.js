@@ -23,16 +23,11 @@ function Title(){
         />
       </View>
 
-      <Text style={[
-        styles.baseText, 
-        {marginBottom: 5}
-      ]}>FrapApp</Text>
+      <Text style={[styles.baseText, {marginBottom: 5}]}>FrapApp</Text>
 
-      <Text style={{
-        color: "#37474fc0", 
-        fontSize: 18,
-        marginTop: 20
-      }}>Iniciar sesion para continuar</Text>
+      <Text style={{color: "#37474fc0", fontSize: 18, marginTop: 20}}>
+        Iniciar sesion para continuar
+      </Text>
     </>
   )
 };
@@ -45,7 +40,7 @@ function Login(){
   const [visiblePwd, setVisiblePwd] = useState(false);
   const router = useRouter();
 
-  // Verificar si ya hay sesión guardada
+  // Verificar si ya hay sesión guardada al montar
   useEffect(() => {
     checkExistingSession();
   }, []);
@@ -56,7 +51,7 @@ function Login(){
       const userData = await AsyncStorage.getItem(USER_KEY);
       
       if (token && userData) {
-        // Auto-navegar si ya está logueado
+        // Si ya está autenticado, ir directo al home
         router.replace("/home");
       }
     } catch (error) {
@@ -73,35 +68,28 @@ function Login(){
     try{
       const response = await fetch(`${API_URL}/api/authParamedicos/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          "usuario": usuario,
-          "contrasena": contrasena
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ "usuario": usuario, "contrasena": contrasena })
       });
 
       const responseData = await response.json();
       console.log(responseData);
       
       if (responseData.success) {
-        // Guardar token y datos del usuario
-
-        // aun no veo esto del storage para el token
-        /*
-        await AsyncStorage.setItem(TOKEN_KEY, responseData.token);
-        await AsyncStorage.setItem(USER_KEY, JSON.stringify({
+        // ✅ GUARDAR TOKEN Y DATOS DEL USUARIO EN ASYNC STORAGE
+        // Ajusta los campos según lo que devuelva tu backend
+        const token = responseData.token || 'session_active';
+        const userInfo = {
           usuario: responseData.usuario || usuario,
           nombre: responseData.nombre || '',
-          id: responseData.id || ''
-        }));
-        */
+          id: responseData.id || responseData.data?.id || ''
+        };
 
-        // Navegar al home
+        await AsyncStorage.setItem(TOKEN_KEY, token);
+        await AsyncStorage.setItem(USER_KEY, JSON.stringify(userInfo));
+
         router.replace("/home");
       } else {
-        // Manejar errores del servidor
         const responseMap = {
           "Este usuario no esta registrado": "*Usuario No Registrado",
           "Contraseña Incorrecta": "*Contraseña Incorrecta",
@@ -118,11 +106,10 @@ function Login(){
     } catch (error) {
       console.error("Error en el Login: ", error);
       
-      // Verificar si es error de conexión
       if (error.message && error.message.includes('Network')) {
         setErrorMessage("*Error de conexión. Verifica tu internet");
         
-        // Opción para continuar offline si ya hay sesión guardada
+        // Modo offline: si ya hay sesión guardada, ofrecer continuar
         const savedToken = await AsyncStorage.getItem(TOKEN_KEY);
         if (savedToken) {
           Alert.alert(
@@ -130,10 +117,7 @@ function Login(){
             "No hay conexión a internet. ¿Desea continuar con la sesión guardada?",
             [
               { text: "Cancelar", style: "cancel" },
-              { 
-                text: "Continuar Offline", 
-                onPress: () => router.replace("/home")
-              }
+              { text: "Continuar Offline", onPress: () => router.replace("/home") }
             ]
           );
         }
@@ -150,27 +134,22 @@ function Login(){
       setErrorMessage("*Usuario es requerido");
       return false;
     }
-    
     if (usuario.length < 4) {
       setErrorMessage("*Usuario debe tener al menos 4 caracteres");
       return false;
     }
-    
     if (usuario.length > 50) {
       setErrorMessage("*Usuario no puede tener más de 50 caracteres");
       return false;
     }
-    
     if (!contrasena) {
       setErrorMessage("*Contraseña es requerida");
       return false;
     }
-    
     if (contrasena.length < 8) {
       setErrorMessage("*Contraseña debe tener al menos 8 caracteres");
       return false;
     }
-    
     return true;
   };
 
@@ -178,70 +157,68 @@ function Login(){
     <>
       <View style={styles.loginCard}>
         {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
-          <View style={styles.field}>
-            <Feather name="user" size={30} style={{marginTop: 5}}/>
-            <TextInput 
-              style={styles.fieldText}
-              placeholder="Usuario"
-              value={usuario}
-              onChangeText={(newUsuario) => {
-                setUsuario(newUsuario);
-                setErrorMessage('');
-              }}
-              autoCapitalize="none"
-              editable={!isLoading}
-            />
-          </View>
 
-          <View style={[styles.field, {marginTop: 10, marginBottom: 15}]}>
-            <Octicons name="lock" size={30} style={{marginTop: 5}}/>
-            <TextInput 
-              style={[styles.fieldText, {paddingRight: 40}]}
-              placeholder="Contraseña"
-              value={contrasena}
-              onChangeText={(newContrasena) => {
-                setContrasena(newContrasena);
-                setErrorMessage('');
-              }}
-              secureTextEntry={!visiblePwd}
-              editable={!isLoading}
-            />
-            
-            <TouchableOpacity
-              onPress={() => setVisiblePwd(!visiblePwd)}
-              style={{position: "absolute", top: 10, right: 8}}
-            >
-              <AntDesign 
-                name={visiblePwd ? "eye-invisible" : "eye"} 
-                size={25} 
-                color="gray"
-              />
-            </TouchableOpacity>
-          </View>  
+        <View style={styles.field}>
+          <Feather name="user" size={30} style={{marginTop: 5}}/>
+          <TextInput 
+            style={styles.fieldText}
+            placeholder="Usuario"
+            value={usuario}
+            onChangeText={(newUsuario) => {
+              setUsuario(newUsuario);
+              setErrorMessage('');
+            }}
+            autoCapitalize="none"
+            editable={!isLoading}
+          />
+        </View>
+
+        <View style={[styles.field, {marginTop: 10, marginBottom: 15}]}>
+          <Octicons name="lock" size={30} style={{marginTop: 5}}/>
+          <TextInput 
+            style={[styles.fieldText, {paddingRight: 40}]}
+            placeholder="Contraseña"
+            value={contrasena}
+            onChangeText={(newContrasena) => {
+              setContrasena(newContrasena);
+              setErrorMessage('');
+            }}
+            secureTextEntry={!visiblePwd}
+            editable={!isLoading}
+          />
           
-          <View style={{alignItems: "center"}}>
-            <TouchableOpacity
-              activeOpacity={0.2}
-              style={[styles.sendButton, isLoading && styles.disabledButton]}
-              onPress={() => {
-                if (validCredentials()){
-                  userLogin();
-                };
-              }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Text style={styles.buttonText}>Cargando...</Text>
-              ) : (
-                <Text style={styles.buttonText}>Ingresar</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => setVisiblePwd(!visiblePwd)}
+            style={{position: "absolute", top: 10, right: 8}}
+          >
+            <AntDesign 
+              name={visiblePwd ? "eye-invisible" : "eye"} 
+              size={25} 
+              color="gray"
+            />
+          </TouchableOpacity>
+        </View>  
+        
+        <View style={{alignItems: "center"}}>
+          <TouchableOpacity
+            activeOpacity={0.2}
+            style={[styles.sendButton, isLoading && styles.disabledButton]}
+            onPress={() => {
+              if (validCredentials()) userLogin();
+            }}
+            disabled={isLoading}
+          >
+            <Text style={styles.buttonText}>
+              {isLoading ? "Cargando..." : "Ingresar"}
+            </Text>
+          </TouchableOpacity>
         </View>
-        <View style={{flexDirection: "row", marginTop: 20}}>
-            <Text>¿No tienes cuenta? </Text>
-            <Link href="/signUp" style={{color: "rgb(118, 177, 70)"}}>Registrate</Link>
-        </View>
+      </View>
+
+      <View style={{flexDirection: "row", marginTop: 20}}>
+        <Text>¿No tienes cuenta? </Text>
+        <Link href="/signUp" style={{color: "rgb(118, 177, 70)"}}>Registrate</Link>
+      </View>
     </>
   )  
 }
@@ -352,22 +329,10 @@ const styles = StyleSheet.create({
     fontSize: 19,
     marginLeft: 10, 
     borderRadius: 10,
-    paddingLeft: 5, 
     flex: 1,
     boxShadow: "0px 2px 10px rgba(122, 119, 119, 0.73)",
     backgroundColor: "white",
     paddingLeft: 10,
     marginBottom: 10
   },
-
-  clearSessionButton: {
-    marginTop: 15,
-    padding: 10
-  },
-
-  clearSessionText: {
-    color: "#888",
-    fontSize: 12,
-    textDecorationLine: "underline"
-  }
 });

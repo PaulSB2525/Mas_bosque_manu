@@ -1,3 +1,3 @@
-const API_URL = "https://years-eddie-seen-profiles.trycloudflare.com";
+const API_URL = "https://appears-fan-willow-son.trycloudflare.com";
 
 module.exports = API_URL;

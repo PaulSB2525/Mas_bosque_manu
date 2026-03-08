@@ -37,9 +37,7 @@ export default function SignUp(){
         try{
             const response = await fetch(`${API_URL}/api/paramedicos`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     "nombre": nombre,
                     "correoInst": correoInst,
@@ -54,21 +52,19 @@ export default function SignUp(){
 
             console.log(responseData);
 
-            if (responseData.success && (responseMessage === "Paramédico creado exitosamente")) {
-                // Guardar token y datos del usuario
-
-                // Error por el momento guardando credenciales
-                /*
-                await AsyncStorage.setItem(TOKEN_KEY, responseData.token);
-                await AsyncStorage.setItem(USER_KEY, JSON.stringify({
+            if (responseData.success && responseMessage === "Paramédico creado exitosamente") {
+                // ✅ GUARDAR SESIÓN TRAS REGISTRO EXITOSO
+                // Ajusta los campos según lo que devuelva tu backend
+                const token = responseData.token || 'session_active';
+                const userInfo = {
                     usuario: usuario,
                     nombre: nombre,
-                    id: responseData.id || ''
-                }));
-                */
+                    id: responseData.id || responseData.data?.id || ''
+                };
 
-                console.log("se pudo");
-                // Navegar al home
+                await AsyncStorage.setItem(TOKEN_KEY, token);
+                await AsyncStorage.setItem(USER_KEY, JSON.stringify(userInfo));
+                
                 router.replace("/home");
             } else {
                 const responseMap = {
@@ -85,13 +81,12 @@ export default function SignUp(){
                 }
             }
 
-        }catch (error){
+        } catch (error){
             console.error("Error en el SignUp: ", error);
             setErrorMessage("*Error de conexion. Verifica tu internet");
         } finally {
             setIsLoading(false);
         }
-        
     };  
 
     function validForm(){
@@ -99,42 +94,34 @@ export default function SignUp(){
             setErrorMessage("*Nombre es requerido");
             return false;
         }
-        
         if (!correoInst.trim() || !correoInst.includes('@')) {
             setErrorMessage("*Correo Institucional inválido");
             return false;
         }
-        
         if (correoEscolar && !correoEscolar.includes('@')) {
             setErrorMessage("*Correo Escolar inválido");
             return false;
         }
-        
         if (usuario.length < 4){
             setErrorMessage("*Usuario debe tener al menos 4 caracteres");
             return false;
         }
-        
         if (usuario.length > 50) {
             setErrorMessage("*Usuario no puede tener más de 50 caracteres");
             return false;
         }
-        
         if (contrasena.length < 8) {
             setErrorMessage("*Contraseña debe tener al menos 8 caracteres");
             return false;
         }
-
         if (!/\d/.test(contrasena)){
             setErrorMessage("*Contraseña debe contener al menos un numero");
             return false;
         }
-
         if (!/[A-Z]/.test(contrasena)){
             setErrorMessage("*Contraseña debe contener al menos una mayuscula");
             return false;
         }
-
         return true;
     }
 
@@ -159,7 +146,9 @@ export default function SignUp(){
                     return (
                         <View style={styles.inputContainer} key={index}>
                             <View style={{flexDirection: "row", gap: 2}}>
-                                <Text style={{color: "red"}}>{section.type === "Correo Escolar" ? "" : "*"}</Text>
+                                <Text style={{color: "red"}}>
+                                    {section.type === "Correo Escolar" ? "" : "*"}
+                                </Text>
                                 <Text style={styles.text}>{section.type}</Text>
                             </View>
                             <TextInput 
@@ -181,7 +170,7 @@ export default function SignUp(){
                                 <TouchableOpacity
                                     onPress={() => setVisiblePwd(!visiblePwd)}
                                     style={{position: "absolute", top: 38, right: 15}}
-                                    >
+                                >
                                     <AntDesign 
                                         name={visiblePwd ? "eye-invisible" : "eye"} 
                                         size={25} 
@@ -189,7 +178,6 @@ export default function SignUp(){
                                     />
                                 </TouchableOpacity>
                             )}
-                            
                         </View>
                     ) 
                 })}
@@ -204,11 +192,9 @@ export default function SignUp(){
                     }}
                     disabled={isLoading}
                 >
-                    {isLoading ? (
-                        <Text style={{fontSize: 23, color: "white"}}>Registrando...</Text>
-                    ) : (
-                        <Text style={{fontSize: 23, color: "white"}}>Registrarme</Text>
-                    )}
+                    <Text style={{fontSize: 23, color: "white"}}>
+                        {isLoading ? "Registrando..." : "Registrarme"}
+                    </Text>
                 </TouchableOpacity>
 
                 <View style={{flexDirection: "row", marginTop: 20}}>

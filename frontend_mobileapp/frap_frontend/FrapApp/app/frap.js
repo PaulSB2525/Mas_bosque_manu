@@ -21,15 +21,90 @@ import { router } from "expo-router";
 
 import API_URL from "../config"; 
 
-// Claves para AsyncStorage
+// ---------------------------------------------------------------------------
+// CLAVES DE ALMACENAMIENTO
+// ---------------------------------------------------------------------------
 const STORAGE_KEYS = {
     PENDING_REPORTS: '@frapapp/pending_reports',
-    OFFLINE_MODE: '@frapapp/offline_mode',
-    LAST_SYNC: '@frapapp/last_sync',
-    AUTH_TOKEN: '@frapapp/auth_token'
+    OFFLINE_MODE:    '@frapapp/offline_mode',
+    LAST_SYNC:       '@frapapp/last_sync',
+    AUTH_TOKEN:      '@frapapp/auth_token',
+    USER_DATA:       '@frapapp/user_data',
 };
 
+// ---------------------------------------------------------------------------
+// HELPERS
+// ---------------------------------------------------------------------------
+
+/** Obtiene el token guardado (puede ser null si no hay sesión) */
+const getAuthToken = async () => {
+    try {
+        return await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    } catch (error) {
+        console.error('Error al obtener token:', error);
+        return null;
+    }
+};
+
+/**
+ * Convierte una URI local (file://) a base64 para poder serializar
+ * imágenes/firmas en AsyncStorage sin depender del sistema de archivos.
+ * Si la URI ya es base64 (data:...) la devuelve tal cual.
+ */
+const uriToBase64 = async (uri) => {
+    if (!uri) return null;
+    if (uri.startsWith('data:')) return uri; // ya está en base64
+
+    try {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror  = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        console.warn('No se pudo convertir imagen a base64, se omite:', error);
+        return null;
+    }
+};
+
+/**
+ * Procesa todas las imágenes y firmas del payload convirtiéndolas a base64
+ * para que puedan guardarse en AsyncStorage sin romper JSON.
+ */
+const serializeImages = async (payload) => {
+    const result = { ...payload };
+
+    // Firmas (SVG paths o URIs)
+    result.firma_paciente  = await uriToBase64(payload.firma_paciente)  ?? payload.firma_paciente;
+    result.firma_testigo   = await uriToBase64(payload.firma_testigo)   ?? payload.firma_testigo;
+    result.firma_operador  = await uriToBase64(payload.firma_operador)  ?? payload.firma_operador;
+
+    // Fotografías (array de URIs)
+    if (Array.isArray(payload.fotografias)) {
+        result.fotografias = await Promise.all(
+            payload.fotografias.map(async (foto) => {
+                if (typeof foto === 'string') {
+                    return await uriToBase64(foto) ?? foto;
+                }
+                if (typeof foto === 'object' && foto.uri) {
+                    return { ...foto, uri: await uriToBase64(foto.uri) ?? foto.uri };
+                }
+                return foto;
+            })
+        );
+    }
+
+    return result;
+};
+
+// ---------------------------------------------------------------------------
+// HEADER COMPONENTE
+// ---------------------------------------------------------------------------
 function Header({ isOffline, pendingCount }) {
+    if (!isOffline && pendingCount === 0) return null;
     return (
         <View style={styles.header}>
             <View style={styles.headerContent}>
@@ -45,22 +120,20 @@ function Header({ isOffline, pendingCount }) {
                             )}
                         </View>
                     )}
+                    {!isOffline && pendingCount > 0 && (
+                        <View style={[styles.offlineBadge, {backgroundColor: '#f39c12'}]}>
+                            <Text style={styles.offlineText}>{pendingCount} pendientes</Text>
+                        </View>
+                    )}
                 </View>
             </View>
         </View>
     );
 }
 
-// Función para obtener token de autenticación
-const getAuthToken = async () => {
-    try {
-        return await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-    } catch (error) {
-        console.error('Error al obtener token:', error);
-        return null;
-    }
-};
-
+// ---------------------------------------------------------------------------
+// PANTALLA PRINCIPAL
+// ---------------------------------------------------------------------------
 export default function Frap() {
     const [patientData, setPatientData] = useState({
         nombre: '',
@@ -75,19 +148,8 @@ export default function Frap() {
         paciente_id: null,
         fecha_hora: new Date().toISOString(),
         lugar_nombre: '',
-        signos_vitales: {
-            Temp: '',
-            FC: '',
-            FR: '',
-            SpO2: '',
-            T_A: '',
-            GLU: ''
-        },
-        nivel_conciencia: {
-            motora: null,
-            verbal: null,
-            ocular: null
-        },
+        signos_vitales: { Temp: '', FC: '', FR: '', SpO2: '', T_A: '', GLU: '' },
+        nivel_conciencia: { motora: null, verbal: null, ocular: null },
         lesiones: [],
         pupilas: [],
         anatomicas: [],
@@ -104,105 +166,88 @@ export default function Frap() {
         fotografias: []
     });
 
-    const [isOffline, setIsOffline] = useState(false);
+    const [isOffline, setIsOffline]                   = useState(false);
     const [pendingReportsCount, setPendingReportsCount] = useState(0);
-    const [isSaving, setIsSaving] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(true);
+    const [isSaving, setIsSaving]                     = useState(false);
 
-    // Referencia para evitar múltiples sincronizaciones
+    // Evitar sincronizaciones en paralelo
     const isSyncingRef = useRef(false);
 
-    const handlePupilsUpdate = useCallback((pupilas) => {
-        updateReportData({ pupilas });
-    }, []);
+    // Callbacks memorizados para secciones pesadas
+    const handlePupilsUpdate     = useCallback((pupilas)    => updateReportData({ pupilas }),    []);
+    const handleAnatomicasUpdate = useCallback((anatomicas) => updateReportData({ anatomicas }), []);
+    const handleInjuriesUpdate   = useCallback((lesiones)   => updateReportData({ lesiones }),   []);
 
-    const handleAnatomicasUpdate = useCallback((anatomicas) => {
-        updateReportData({ anatomicas });
-    }, []);
-
-    const handleInjuriesUpdate = useCallback((lesiones) => {
-        updateReportData({ lesiones });
-    }, []);
-
-    // Verificar conexión y autenticación al cargar
+    // -----------------------------------------------------------------------
+    // MONTAR: escuchar red y cargar contador de pendientes
+    // -----------------------------------------------------------------------
     useEffect(() => {
+        // Cargar cantidad de reportes pendientes al abrir la pantalla
+        loadPendingReportsCount();
+
         const unsubscribe = NetInfo.addEventListener(state => {
             const offline = !state.isConnected;
             setIsOffline(offline);
-            
-            // Si se reconecta y hay reportes pendientes, sincronizar
-            if (!offline && pendingReportsCount > 0 && !isSyncingRef.current) {
-                syncPendingReports();
+
+            // Al recuperar conexión, sincronizar automáticamente si hay pendientes
+            if (!offline && !isSyncingRef.current) {
+                loadPendingReportsCount().then(count => {
+                    if (count > 0) syncPendingReports();
+                });
             }
         });
-
-        // Cargar reportes pendientes al iniciar
-
-        //por el momento no
-        //loadPendingReportsCount();
-        
-        // Verificar autenticación
-        
-        // Aun autenticamos tokens, checar backend
-        // checkAuthentication();
 
         return unsubscribe;
     }, []);
 
-    const checkAuthentication = async () => {
+    // -----------------------------------------------------------------------
+    // HELPERS DE ESTADO
+    // -----------------------------------------------------------------------
+    const updateReportData  = (newData) => setReportData(prev  => ({ ...prev,  ...newData }));
+    const updatePatientData = (newData) => setPatientData(prev => ({ ...prev, ...newData }));
+
+    // -----------------------------------------------------------------------
+    // REPORTES PENDIENTES: cargar, guardar, sincronizar
+    // -----------------------------------------------------------------------
+
+    /** Devuelve el número de reportes pendientes y actualiza el estado */
+    const loadPendingReportsCount = async () => {
         try {
-            const token = await getAuthToken();
-            if (!token) {
-                setIsAuthenticated(false);
-                Alert.alert(
-                    "Sesión expirada",
-                    "Tu sesión ha expirado. Por favor inicia sesión nuevamente.",
-                    [{ text: "OK", onPress: () => router.replace("/") }]
-                );
-            }
+            const raw = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_REPORTS);
+            const reports = raw ? JSON.parse(raw) : [];
+            setPendingReportsCount(reports.length);
+            return reports.length;
         } catch (error) {
-            console.error('Error al verificar autenticación:', error);
+            console.error('Error al cargar reportes pendientes:', error);
+            return 0;
         }
     };
 
-    const updateReportData = (newData) => {
-        setReportData(prev => ({
-            ...prev,
-            ...newData
-        }));
-    };
-
-    const updatePatientData = (newData) => {
-        setPatientData(prev => ({
-            ...prev,
-            ...newData
-        }));
-    };
-
-    // Guardar reporte localmente
+    /**
+     * Guarda un reporte en la cola local de pendientes.
+     * Las imágenes y firmas se convierten a base64 antes de serializar.
+     */
     const saveReportLocally = async (reportPayload) => {
         try {
-            const pendingReports = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_REPORTS);
-            const reports = pendingReports ? JSON.parse(pendingReports) : [];
-            
-            // Agregar timestamp y ID único para el reporte offline
+            // Serializar imágenes/firmas a base64 para poder guardar en AsyncStorage
+            const serializedPayload = await serializeImages(reportPayload);
+
+            const raw = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_REPORTS);
+            const reports = raw ? JSON.parse(raw) : [];
+
             const offlineReport = {
-                ...reportPayload,
-                id: `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                ...serializedPayload,
+                id:        `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 createdAt: new Date().toISOString(),
-                status: 'pending',
-                attempts: 0
+                status:    'pending',
+                attempts:  0
             };
-            
+
             reports.push(offlineReport);
             await AsyncStorage.setItem(STORAGE_KEYS.PENDING_REPORTS, JSON.stringify(reports));
-            
-            // Actualizar contador
-            setPendingReportsCount(reports.length);
-            
-            // Guardar modo offline
             await AsyncStorage.setItem(STORAGE_KEYS.OFFLINE_MODE, 'true');
-            
+
+            setPendingReportsCount(reports.length);
             return offlineReport.id;
         } catch (error) {
             console.error('Error al guardar localmente:', error);
@@ -210,113 +255,85 @@ export default function Frap() {
         }
     };
 
-    // Cargar contador de reportes pendientes
-    const loadPendingReportsCount = async () => {
-        try {
-            const pendingReports = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_REPORTS);
-            const reports = pendingReports ? JSON.parse(pendingReports) : [];
-            setPendingReportsCount(reports.length);
-        } catch (error) {
-            console.error('Error al cargar reportes pendientes:', error);
-        }
-    };
-
-    // Sincronizar reportes pendientes
+    /**
+     * Intenta subir todos los reportes pendientes al servidor.
+     * Se llama automáticamente al recuperar conexión o manualmente por el usuario.
+     */
     const syncPendingReports = async () => {
         if (isSyncingRef.current) return;
-        
         isSyncingRef.current = true;
-        
+
         try {
-            const pendingReports = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_REPORTS);
-            let reports = pendingReports ? JSON.parse(pendingReports) : [];
-            
-            if (reports.length === 0) {
-                isSyncingRef.current = false;
-                return;
-            }
-            
+            const raw = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_REPORTS);
+            let reports = raw ? JSON.parse(raw) : [];
+
+            if (reports.length === 0) { isSyncingRef.current = false; return; }
+
             console.log(`Sincronizando ${reports.length} reportes pendientes...`);
-            
-            const successfulReports = [];
-            const failedReports = [];
-            
-            // Obtener token para autenticación
+
             const token = await getAuthToken();
             const headers = {
                 'Content-Type': 'application/json',
                 ...(token && { 'Authorization': `Bearer ${token}` })
             };
-            
-            // Intentar enviar cada reporte
+
+            const successIds  = [];
+            const failedReports = [];
+
             for (const report of reports) {
                 try {
-                    // Separar paciente y reporte para enviar por separado
-                    const { paciente, ...reportData } = report;
-                    
+                    const { paciente, id, createdAt, status, attempts, ...reportFields } = report;
+
                     // 1. Crear paciente
-                    const patientResponse = await fetch(`${API_URL}/api/pacientes`, {
+                    const patientRes = await fetch(`${API_URL}/api/pacientes`, {
                         method: 'POST',
-                        headers: headers,
+                        headers,
                         body: JSON.stringify(paciente),
                     });
-                    
-                    if (!patientResponse.ok) {
-                        throw new Error('Error al crear paciente offline');
-                    }
-                    
-                    const patientResult = await patientResponse.json();
-                    
-                    // 2. Crear reporte con ID del paciente
-                    const reportPayload = {
-                        ...reportData,
-                        paciente_id: patientResult.id
-                    };
-                    
-                    const reportResponse = await fetch(`${API_URL}/api/reportes`, {
+
+                    if (!patientRes.ok) throw new Error('Error al crear paciente offline');
+
+                    const patientResult = await patientRes.json();
+
+                    // 2. Crear reporte con el ID del paciente recién creado
+                    const reportPayload = { ...reportFields, paciente_id: patientResult.data?.id || patientResult.id };
+
+                    const reportRes = await fetch(`${API_URL}/api/reportes`, {
                         method: 'POST',
-                        headers: headers,
+                        headers,
                         body: JSON.stringify(reportPayload),
                     });
-                    
-                    if (reportResponse.ok) {
-                        successfulReports.push(report.id);
-                        console.log(`Reporte ${report.id} sincronizado exitosamente`);
-                    } else {
-                        throw new Error('Error al crear reporte offline');
-                    }
-                    
+
+                    if (!reportRes.ok) throw new Error('Error al crear reporte offline');
+
+                    successIds.push(id);
+                    console.log(`✅ Reporte ${id} sincronizado`);
+
                 } catch (error) {
-                    console.error(`Error al sincronizar reporte ${report.id}:`, error);
-                    report.attempts = (report.attempts || 0) + 1;
-                    failedReports.push(report);
+                    console.error(`❌ Error al sincronizar ${report.id}:`, error);
+                    failedReports.push({ ...report, attempts: (report.attempts || 0) + 1 });
                 }
             }
-            
-            // Remover reportes exitosos
-            const updatedReports = failedReports.filter(report => report.attempts < 3); // Máximo 3 intentos
-            
-            // Actualizar almacenamiento
-            await AsyncStorage.setItem(STORAGE_KEYS.PENDING_REPORTS, JSON.stringify(updatedReports));
-            
-            // Actualizar contador
-            setPendingReportsCount(updatedReports.length);
-            
-            // Si se sincronizaron todos, limpiar modo offline
-            if (updatedReports.length === 0) {
+
+            // Conservar sólo los que fallaron y aún no superaron 3 intentos
+            const remaining = failedReports.filter(r => r.attempts < 3);
+            await AsyncStorage.setItem(STORAGE_KEYS.PENDING_REPORTS, JSON.stringify(remaining));
+            setPendingReportsCount(remaining.length);
+
+            if (remaining.length === 0) {
                 await AsyncStorage.removeItem(STORAGE_KEYS.OFFLINE_MODE);
                 await AsyncStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
             }
-            
-            // Mostrar resultado
-            if (successfulReports.length > 0) {
+
+            if (successIds.length > 0) {
                 Alert.alert(
                     "Sincronización completada",
-                    `${successfulReports.length} reporte(s) enviados exitosamente`,
+                    `${successIds.length} reporte(s) enviados exitosamente` +
+                    (remaining.length > 0 ? `\n${remaining.length} reporte(s) fallaron y se reintentarán.` : ''),
                     [{ text: "OK" }]
                 );
             }
-            
+
         } catch (error) {
             console.error('Error en sincronización:', error);
             Alert.alert("Error", "No se pudo completar la sincronización");
@@ -325,43 +342,37 @@ export default function Frap() {
         }
     };
 
-    // Manejar guardado (online/offline)
+    // -----------------------------------------------------------------------
+    // GUARDAR REPORTE (decide online vs offline)
+    // -----------------------------------------------------------------------
     const handleSaveReport = async () => {
-        if (isSaving || !isAuthenticated) return;
-        
+        if (isSaving) return;
         setIsSaving(true);
-        
+
         try {
             // Validaciones básicas
             if (!patientData.nombre.trim()) {
                 Alert.alert("Error", "Nombre del paciente es requerido");
                 return;
             }
-
             if (!patientData.edad) {
                 Alert.alert("Error", "Edad del paciente es requerida");
                 return;
             }
-
             if (!reportData.lugar_nombre) {
                 Alert.alert("Error", "Lugar de ocurrencia es requerido");
                 return;
             }
-
-            // Validar formato de presión arterial
             if (reportData.signos_vitales.T_A && !/^\d{2,3}\/\d{2,3}$/.test(reportData.signos_vitales.T_A)) {
                 Alert.alert("Error", "Formato de presión arterial inválido. Use: 120/80");
                 return;
             }
 
-            // Si está offline, guardar localmente
             if (isOffline) {
                 await saveOfflineReport();
-                return;
+            } else {
+                await enviarDatosOnline();
             }
-
-            // Si está online, intentar enviar directamente
-            await enviarDatosOnline();
 
         } catch (error) {
             console.error('Error al guardar reporte:', error);
@@ -371,65 +382,50 @@ export default function Frap() {
         }
     };
 
-    // Guardar reporte offline
+    // -----------------------------------------------------------------------
+    // GUARDAR OFFLINE
+    // -----------------------------------------------------------------------
     const saveOfflineReport = async () => {
         try {
-            // Preparar datos del paciente (para crear localmente)
             const pacientePayload = {
                 ...patientData,
                 edad: parseInt(patientData.edad) || 0,
                 _id: `offline_patient_${Date.now()}`
             };
 
-            // Preparar reporte para almacenamiento offline
+            const vitales = buildSignosVitales();
+            const nivelConciencia = buildNivelConciencia();
+
             const reportPayload = {
                 paciente: pacientePayload,
-                fecha_hora: reportData.fecha_hora,
-                lugar_nombre: reportData.lugar_nombre,
-                observaciones: reportData.observaciones || '',
-                recomendaciones: reportData.recomendaciones || '',
+                fecha_hora:        reportData.fecha_hora,
+                lugar_nombre:      reportData.lugar_nombre,
+                observaciones:     reportData.observaciones     || '',
+                recomendaciones:   reportData.recomendaciones   || '',
                 traslado_aceptado: reportData.traslado_aceptado,
-                numero_unidad: reportData.numero_unidad || '',
-                nombre_operador: reportData.nombre_operador || '',
-                firma_operador: reportData.firma_operador || '',
-                firma_paciente: reportData.firma_paciente || '',
-                nombre_testigo: reportData.nombre_testigo || '',
-                firma_testigo: reportData.firma_testigo || '',
-                signos_vitales: {
-                    Temp: reportData.signos_vitales.Temp ? parseInt(reportData.signos_vitales.Temp) : null,
-                    FC: reportData.signos_vitales.FC ? parseInt(reportData.signos_vitales.FC) : null,
-                    FR: reportData.signos_vitales.FR ? parseInt(reportData.signos_vitales.FR) : null,
-                    SpO2: reportData.signos_vitales.SpO2 ? parseInt(reportData.signos_vitales.SpO2) : null,
-                    T_A: reportData.signos_vitales.T_A || '',
-                    GLU: reportData.signos_vitales.GLU ? parseInt(reportData.signos_vitales.GLU) : null
-                },
-                nivel_conciencia: reportData.nivel_conciencia.motora || 
-                                 reportData.nivel_conciencia.verbal || 
-                                 reportData.nivel_conciencia.ocular ? 
-                                 reportData.nivel_conciencia : null,
-                lesiones: reportData.lesiones,
-                pupilas: reportData.pupilas,
-                anatomicas: reportData.anatomicas,
-                insumos: reportData.insumos,
-                fotografias: reportData.fotografias
+                numero_unidad:     reportData.numero_unidad     || '',
+                nombre_operador:   reportData.nombre_operador   || '',
+                firma_operador:    reportData.firma_operador    || '',
+                firma_paciente:    reportData.firma_paciente    || '',
+                nombre_testigo:    reportData.nombre_testigo    || '',
+                firma_testigo:     reportData.firma_testigo     || '',
+                signos_vitales:    vitales,
+                nivel_conciencia:  nivelConciencia,
+                lesiones:          reportData.lesiones,
+                pupilas:           reportData.pupilas,
+                anatomicas:        reportData.anatomicas,
+                insumos:           reportData.insumos,
+                fotografias:       reportData.fotografias   // se serializan en saveReportLocally
             };
 
-            // Guardar localmente
             const reportId = await saveReportLocally(reportPayload);
-            
+
             Alert.alert(
-                "Guardado Offline",
-                `Reporte guardado localmente (ID: ${reportId.substring(0, 8)}...)\nSe enviará automáticamente cuando haya conexión.`,
+                "Guardado Offline ✅",
+                `Reporte guardado localmente.\nID: ${reportId.substring(0, 12)}...\n\nSe enviará automáticamente cuando haya conexión.`,
                 [
-                    { 
-                        text: "Ver Reportes Pendientes", 
-                        onPress: () => showPendingReports() 
-                    },
-                    { 
-                        text: "Nuevo Reporte", 
-                        onPress: resetForm,
-                        style: "default"
-                    }
+                    { text: "Ver Pendientes",   onPress: showPendingReports },
+                    { text: "Nuevo Reporte",     onPress: resetForm, style: "default" }
                 ]
             );
 
@@ -439,166 +435,147 @@ export default function Frap() {
         }
     };
 
-    // Enviar datos online
+    // -----------------------------------------------------------------------
+    // ENVIAR ONLINE
+    // -----------------------------------------------------------------------
     const enviarDatosOnline = async () => {
         try {
-            // Obtener token para autenticación
-            // Por el momento sin token, debo de revisar eso en el backend con los permisos de admin
-            //const token = await getAuthToken();
-            const headers = {
-                'Content-Type': 'application/json',
-                //...(token && { 'Authorization': `Bearer ${token}` })
-            };
+            // Por el momento sin token (ajustar cuando el backend lo requiera)
+            const headers = { 'Content-Type': 'application/json' };
 
-            // 1. Crear paciente en backend
+            // 1. Crear paciente
             const patientResponse = await fetch(`${API_URL}/api/pacientes`, {
                 method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    ...patientData,
-                    edad: parseInt(patientData.edad) || 0
-                }),
+                headers,
+                body: JSON.stringify({ ...patientData, edad: parseInt(patientData.edad) || 0 }),
             });
 
             const patientResult = await patientResponse.json();
-            console.log(patientResult);
- 
+            console.log('Paciente:', patientResult);
+
             if (!patientResult.success) {
                 throw new Error(patientResult.message || 'Error al crear paciente');
             }
 
-            // 2. Preparar y enviar reporte
+            const vitales       = buildSignosVitales();
+            const nivelConciencia = buildNivelConciencia();
+
+            // 2. Preparar reporte
             const reportPayload = {
-                paciente_id: patientResult.data.id,
-                fecha_hora: reportData.fecha_hora,
-                lugar_nombre: reportData.lugar_nombre,
-                observaciones: reportData.observaciones || '',
-                recomendaciones: reportData.recomendaciones || '',
+                paciente_id:       patientResult.data.id,
+                fecha_hora:        reportData.fecha_hora,
+                lugar_nombre:      reportData.lugar_nombre,
+                observaciones:     reportData.observaciones     || '',
+                recomendaciones:   reportData.recomendaciones   || '',
                 traslado_aceptado: reportData.traslado_aceptado,
-                numero_unidad: reportData.numero_unidad || '',
-                nombre_operador: reportData.nombre_operador || '',
-                firma_operador: reportData.firma_operador || '',
-                firma_paciente: reportData.firma_paciente || '',
-                nombre_testigo: reportData.nombre_testigo || '',
-                firma_testigo: reportData.firma_testigo || '',
-                signos_vitales: {
-                    Temp: reportData.signos_vitales.Temp ? parseInt(reportData.signos_vitales.Temp) : null,
-                    FC: reportData.signos_vitales.FC ? parseInt(reportData.signos_vitales.FC) : null,
-                    FR: reportData.signos_vitales.FR ? parseInt(reportData.signos_vitales.FR) : null,
-                    SpO2: reportData.signos_vitales.SpO2 ? parseInt(reportData.signos_vitales.SpO2) : null,
-                    T_A: reportData.signos_vitales.T_A || '',
-                    GLU: reportData.signos_vitales.GLU ? parseInt(reportData.signos_vitales.GLU) : null
-                },
-                nivel_conciencia: reportData.nivel_conciencia.motora || 
-                                 reportData.nivel_conciencia.verbal || 
-                                 reportData.nivel_conciencia.ocular ? 
-                                 reportData.nivel_conciencia : undefined,
-                lesiones: reportData.lesiones,
-                pupilas: reportData.pupilas,
-                anatomicas: reportData.anatomicas,
-                insumos: reportData.insumos,
-                fotografias: reportData.fotografias
+                numero_unidad:     reportData.numero_unidad     || '',
+                nombre_operador:   reportData.nombre_operador   || '',
+                firma_operador:    reportData.firma_operador    || '',
+                firma_paciente:    reportData.firma_paciente    || '',
+                nombre_testigo:    reportData.nombre_testigo    || '',
+                firma_testigo:     reportData.firma_testigo     || '',
+                signos_vitales:    vitales,
+                nivel_conciencia:  nivelConciencia,
+                lesiones:          reportData.lesiones,
+                pupilas:           reportData.pupilas,
+                anatomicas:        reportData.anatomicas,
+                insumos:           reportData.insumos,
+                fotografias:       reportData.fotografias
             };
 
-            // Limpiar campos nulos
-            Object.keys(reportPayload.signos_vitales).forEach(key => {
-                if (reportPayload.signos_vitales[key] === null || reportPayload.signos_vitales[key] === '') {
-                    delete reportPayload.signos_vitales[key];
-                }
-            });
-
-            if (!reportPayload.nivel_conciencia) {
-                delete reportPayload.nivel_conciencia;
-            }
+            if (!reportPayload.nivel_conciencia) delete reportPayload.nivel_conciencia;
 
             // 3. Enviar reporte
             const reportResponse = await fetch(`${API_URL}/api/reportes`, {
                 method: 'POST',
-                headers: headers,
+                headers,
                 body: JSON.stringify(reportPayload),
             });
 
             const reportResult = await reportResponse.json();
-            console.log(reportResult);
-            console.log(reportResult.success);
+            console.log('Reporte:', reportResult);
 
             if (!reportResult.success) {
                 throw new Error(reportResult.message || 'Error al crear reporte');
             }
 
             Alert.alert(
-                "Éxito",
+                "Éxito ✅",
                 "Reporte guardado en el servidor",
-                [{ text: "OK", onPress: () => {
-                    resetForm; 
-                    router.replace("/home");
-                }}]
+                [{ text: "OK", onPress: () => { resetForm(); router.replace("/home"); } }]
             );
 
         } catch (error) {
             console.error('Error al enviar online:', error);
-            
-            // Verificar si es error de autenticación
-            if (error.message && error.message.includes('401') || error.message.includes('token')) {
-                setIsAuthenticated(false);
 
-                //Credenciales aun no se pueden guardar bien
-                Alert.alert(
-                    "Sesión expirada",
-                    "Tu sesión ha expirado. El reporte se guardará localmente.",
-                    [
-                        { text: "OK", onPress: () => {
-                            setIsOffline(true);
-                            saveOfflineReport();
-                        }}
-                    ]
-                );
-                return;
-            }
-            
-            // Si falla el envío online por otra razón, intentar guardar offline
-            /*
+            // Si falla por conexión, ofrecer guardar offline
             Alert.alert(
                 "Error de conexión",
                 "No se pudo conectar al servidor. ¿Desea guardar el reporte localmente?",
                 [
                     { text: "Cancelar", style: "cancel" },
-                    { 
-                        text: "Guardar Offline", 
+                    {
+                        text: "Guardar Offline",
                         onPress: () => {
                             setIsOffline(true);
                             saveOfflineReport();
                         }
                     }
                 ]
-            );*/
+            );
         }
     };
 
-    // Mostrar reportes pendientes
+    // -----------------------------------------------------------------------
+    // HELPERS DE PAYLOAD
+    // -----------------------------------------------------------------------
+
+    /** Convierte los signos vitales a números y elimina los vacíos */
+    const buildSignosVitales = () => {
+        const raw = reportData.signos_vitales;
+        const v = {
+            Temp: raw.Temp  ? parseInt(raw.Temp)  : null,
+            FC:   raw.FC    ? parseInt(raw.FC)    : null,
+            FR:   raw.FR    ? parseInt(raw.FR)    : null,
+            SpO2: raw.SpO2  ? parseInt(raw.SpO2)  : null,
+            T_A:  raw.T_A   || null,
+            GLU:  raw.GLU   ? parseInt(raw.GLU)   : null,
+        };
+        // Eliminar nulos y vacíos para no mandar campos basura al servidor
+        Object.keys(v).forEach(k => { if (v[k] === null || v[k] === '') delete v[k]; });
+        return v;
+    };
+
+    /** Devuelve nivel_conciencia sólo si tiene al menos un valor */
+    const buildNivelConciencia = () => {
+        const nc = reportData.nivel_conciencia;
+        if (nc.motora || nc.verbal || nc.ocular) return nc;
+        return null;
+    };
+
+    // -----------------------------------------------------------------------
+    // MOSTRAR PENDIENTES / SINCRONIZACIÓN MANUAL
+    // -----------------------------------------------------------------------
     const showPendingReports = async () => {
         try {
-            const pendingReports = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_REPORTS);
-            const reports = pendingReports ? JSON.parse(pendingReports) : [];
-            
+            const raw = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_REPORTS);
+            const reports = raw ? JSON.parse(raw) : [];
+
             if (reports.length === 0) {
                 Alert.alert("Reportes Pendientes", "No hay reportes pendientes de enviar.");
                 return;
             }
-            
-            const reportList = reports.map((r, i) => 
-                `• ${i+1}. ${r.paciente.nombre} - ${new Date(r.createdAt).toLocaleDateString()}`
+
+            const reportList = reports.map((r, i) =>
+                `• ${i+1}. ${r.paciente?.nombre ?? 'Sin nombre'} — ${new Date(r.createdAt).toLocaleDateString()}`
             ).join('\n');
-            
+
             Alert.alert(
                 `Reportes Pendientes (${reports.length})`,
                 reportList,
                 [
                     { text: "Cerrar" },
-                    { 
-                        text: "Sincronizar Ahora", 
-                        onPress: syncPendingReports
-                    }
+                    { text: "Sincronizar Ahora", onPress: syncPendingReports }
                 ]
             );
         } catch (error) {
@@ -606,15 +583,14 @@ export default function Frap() {
         }
     };
 
-    // Sincronización manual
     const handleManualSync = () => {
         if (pendingReportsCount > 0) {
             Alert.alert(
                 "Sincronizar",
                 `¿Enviar ${pendingReportsCount} reporte(s) pendientes al servidor?`,
                 [
-                    { text: "Cancelar", style: "cancel" },
-                    { text: "Sincronizar", onPress: syncPendingReports }
+                    { text: "Cancelar",      style: "cancel" },
+                    { text: "Sincronizar",   onPress: syncPendingReports }
                 ]
             );
         } else {
@@ -622,140 +598,74 @@ export default function Frap() {
         }
     };
 
+    // -----------------------------------------------------------------------
+    // RESET DEL FORMULARIO
+    // -----------------------------------------------------------------------
     const resetForm = () => {
-        setPatientData({
-            nombre: '',
-            edad: '',
-            genero: 0,
-            alergias: [],
-            patologias: [],
-            medicamentos: []
-        });
-        
+        setPatientData({ nombre: '', edad: '', genero: 0, alergias: [], patologias: [], medicamentos: [] });
         setReportData({
             paciente_id: null,
             fecha_hora: new Date().toISOString(),
             lugar_nombre: '',
-            signos_vitales: {
-                Temp: '',
-                FC: '',
-                FR: '',
-                SpO2: '',
-                T_A: '',
-                GLU: ''
-            },
-            nivel_conciencia: {
-                motora: null,
-                verbal: null,
-                ocular: null
-            },
-            lesiones: [],
-            pupilas: [],
-            anatomicas: [],
-            observaciones: '',
-            recomendaciones: '',
+            signos_vitales: { Temp: '', FC: '', FR: '', SpO2: '', T_A: '', GLU: '' },
+            nivel_conciencia: { motora: null, verbal: null, ocular: null },
+            lesiones: [], pupilas: [], anatomicas: [],
+            observaciones: '', recomendaciones: '',
             traslado_aceptado: false,
-            numero_unidad: '',
-            nombre_operador: '',
-            firma_operador: '',
-            firma_paciente: '',
-            nombre_testigo: '',
-            firma_testigo: '',
-            insumos: [],
-            fotografias: []
+            numero_unidad: '', nombre_operador: '',
+            firma_operador: '', firma_paciente: '',
+            nombre_testigo: '', firma_testigo: '',
+            insumos: [], fotografias: []
         });
     };
 
+    // -----------------------------------------------------------------------
+    // RENDER
+    // -----------------------------------------------------------------------
     return (
         <SafeAreaView style={styles.frapContainer}>
-            
-            {/* No me gusta el header, cambio posible
-            <Header 
-                isOffline={isOffline}
-                pendingCount={pendingReportsCount}
-            />
-            */}
-            
+            <Header isOffline={isOffline} pendingCount={pendingReportsCount} />
+
             <ScrollView showsVerticalScrollIndicator={false}>
-                <General 
-                    data={reportData}
-                    onUpdate={updateReportData}
-                />
-
-                <Patient 
-                    data={patientData}
-                    onUpdate={updatePatientData}
-                />
-
-                <Vitals 
+                <General    data={reportData}  onUpdate={updateReportData} />
+                <Patient    data={patientData} onUpdate={updatePatientData} />
+                <Vitals
                     data={reportData.signos_vitales}
-                    onUpdate={(newVitals) => updateReportData({ 
+                    onUpdate={(newVitals) => updateReportData({
                         signos_vitales: { ...reportData.signos_vitales, ...newVitals }
                     })}
                 />
-
-                <ESCGW 
+                <ESCGW
                     data={reportData.nivel_conciencia}
-                    onUpdate={(newGlasgow) => updateReportData({ 
+                    onUpdate={(newGlasgow) => updateReportData({
                         nivel_conciencia: { ...reportData.nivel_conciencia, ...newGlasgow }
                     })}
                 />
-
-                <Pupils 
-                    data={reportData.pupilas}
-                    onUpdate={handlePupilsUpdate}  // ← función memoizada
-                />
-
-                <Injury 
-                    data={reportData.lesiones}
-                    onUpdate={handleInjuriesUpdate}
-                />
-
-                <AnatomicId 
-                    data={reportData.anatomicas}
-                    onUpdate={(handleAnatomicasUpdate)}
-                />
-
-                <Supplies 
-                    data={reportData.insumos}
-                    onUpdate={(insumos) => updateReportData({ insumos })}
-                />
-
-                <Notes 
+                <Pupils      data={reportData.pupilas}    onUpdate={handlePupilsUpdate} />
+                <Injury      data={reportData.lesiones}   onUpdate={handleInjuriesUpdate} />
+                <AnatomicId  data={reportData.anatomicas} onUpdate={handleAnatomicasUpdate} />
+                <Supplies    data={reportData.insumos}    onUpdate={(insumos) => updateReportData({ insumos })} />
+                <Notes
                     observaciones={reportData.observaciones}
                     recomendaciones={reportData.recomendaciones}
                     onUpdate={(updates) => updateReportData(updates)}
                 />
-
-                <Pictures 
-                    data={reportData.fotografias}
-                    onUpdate={(fotografias) => updateReportData({ fotografias })}
-                />
-
-                <Signature 
-                    data={reportData.firma_paciente}
-                    onUpdate={(firma_paciente) => updateReportData({ firma_paciente })}
-                />
-
-                <Witness 
-                    data={{
-                        nombre_testigo: reportData.nombre_testigo,
-                        firma_testigo: reportData.firma_testigo
-                    }}
+                <Pictures   data={reportData.fotografias} onUpdate={(fotografias) => updateReportData({ fotografias })} />
+                <Signature  data={reportData.firma_paciente} onUpdate={(firma_paciente) => updateReportData({ firma_paciente })} />
+                <Witness
+                    data={{ nombre_testigo: reportData.nombre_testigo, firma_testigo: reportData.firma_testigo }}
                     onUpdate={(updates) => updateReportData(updates)}
                 />
-
-                <Transport 
+                <Transport
                     data={{
                         traslado_aceptado: reportData.traslado_aceptado,
-                        numero_unidad: reportData.numero_unidad,
-                        nombre_operador: reportData.nombre_operador,
-                        firma_operador: reportData.firma_operador
+                        numero_unidad:     reportData.numero_unidad,
+                        nombre_operador:   reportData.nombre_operador,
+                        firma_operador:    reportData.firma_operador
                     }}
                     onUpdate={(updates) => updateReportData(updates)}
                 />
-
-                <SaveButton 
+                <SaveButton
                     onSave={handleSaveReport}
                     isOffline={isOffline}
                     isSaving={isSaving}
@@ -767,6 +677,9 @@ export default function Frap() {
     );
 }
 
+// ---------------------------------------------------------------------------
+// ESTILOS
+// ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
     frapContainer: {
         flex: 1,
@@ -797,9 +710,7 @@ const styles = StyleSheet.create({
         flex: 1
     },
 
-    statusContainer: {
-        marginLeft: 10
-    },
+    statusContainer: { marginLeft: 10 },
 
     offlineBadge: {
         flexDirection: 'row',
@@ -811,11 +722,7 @@ const styles = StyleSheet.create({
         gap: 6
     },
 
-    offlineText: {
-        color: 'white',
-        fontSize: 12,
-        fontWeight: 'bold'
-    },
+    offlineText:  { color: 'white', fontSize: 12, fontWeight: 'bold' },
 
     pendingBadge: {
         backgroundColor: 'white',
@@ -826,9 +733,5 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
 
-    pendingText: {
-        color: '#ff6b6b',
-        fontSize: 10,
-        fontWeight: 'bold'
-    }
+    pendingText: { color: '#ff6b6b', fontSize: 10, fontWeight: 'bold' }
 });

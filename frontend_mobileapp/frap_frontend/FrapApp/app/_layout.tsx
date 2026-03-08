@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -9,10 +9,36 @@ export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
+  const segments = useSegments();
 
+  // Verificar auth al montar
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Re-verificar auth cada vez que cambia la ruta activa.
+  // Esto es clave para que el logout desde home.js funcione:
+  // cuando home.js borra el token y navega a "/", segments cambia,
+  // este efecto corre, checkAuthStatus encuentra el storage vacío,
+  // setIsAuthenticated(false) dispara el efecto de abajo → redirige al login.
+  useEffect(() => {
+    if (!isLoading) checkAuthStatus();
+  }, [segments]);
+
+  // Redirigir según estado de autenticación
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthScreen = segments[0] === 'signUp' || segments[0] === undefined;
+
+    if (isAuthenticated && inAuthScreen) {
+      // Tiene sesión pero está en login/signup → ir a home
+      router.replace("/home");
+    } else if (!isAuthenticated && !inAuthScreen) {
+      // No tiene sesión pero intenta acceder a pantalla protegida → ir a login
+      router.replace("/");
+    }
+  }, [isAuthenticated, isLoading, segments]);
 
   const checkAuthStatus = async () => {
     try {
@@ -21,10 +47,6 @@ export default function RootLayout() {
       
       if (token && userData) {
         setIsAuthenticated(true);
-        // Redirigir a home si está autenticado y en login
-        if (router.canGoBack()) {
-          router.replace("/home");
-        }
       } else {
         setIsAuthenticated(false);
       }
@@ -35,6 +57,9 @@ export default function RootLayout() {
       setIsLoading(false);
     }
   };
+
+  // No renderizar nada hasta saber el estado de auth (evita flash del login)
+  if (isLoading) return null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
