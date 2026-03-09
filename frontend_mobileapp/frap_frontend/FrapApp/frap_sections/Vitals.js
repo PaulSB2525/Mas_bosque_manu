@@ -1,4 +1,4 @@
-import { StyleSheet, TextInput, View, Text } from "react-native";
+import { StyleSheet, TextInput, View, Text, KeyboardAvoidingView, Platform } from "react-native";
 import { useState } from "react";
 
 export default function VitalsSection({ data, onUpdate }) {
@@ -16,7 +16,11 @@ export default function VitalsSection({ data, onUpdate }) {
     ];
 
     return (
-        <View style={{ marginRight: 15, marginTop: 30 }}>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1, marginRight: 15, marginTop: 30 }}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        >
             <Text style={styles.title}>Signos Vitales</Text>
 
             <View style={styles.section}>
@@ -46,7 +50,7 @@ export default function VitalsSection({ data, onUpdate }) {
                 })}
             </View>
 
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 

@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView } from "react-native";
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { useState } from "react";
 import { AntDesign } from "@expo/vector-icons";
 
@@ -27,7 +27,11 @@ export default function PatientSection({ data, onUpdate }) {
     ];
 
     return (
-        <>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        >
             <Text style={styles.title}>Datos del Paciente</Text>
 
             <TextInput
@@ -142,7 +146,7 @@ export default function PatientSection({ data, onUpdate }) {
                     />
                 </View>
             </View>
-        </>
+        </KeyboardAvoidingView>
     );
 }
 

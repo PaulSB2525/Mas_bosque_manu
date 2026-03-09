@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const TOKEN_KEY = '@frapapp/auth_token';
 const USER_KEY = '@frapapp/user_data';
@@ -62,11 +63,13 @@ export default function RootLayout() {
   if (isLoading) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" options={{ title: 'Login' }} />
-      <Stack.Screen name="home" options={{ title: 'Home' }} />
-      <Stack.Screen name="frap" options={{ title: 'Frap' }} />
-      <Stack.Screen name="signUp" options={{ title: 'Sign Up' }} />
-    </Stack>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ title: 'Login' }} />
+        <Stack.Screen name="home" options={{ title: 'Home' }} />
+        <Stack.Screen name="frap" options={{ title: 'Frap' }} />
+        <Stack.Screen name="signUp" options={{ title: 'Sign Up' }} />
+      </Stack>
+    </SafeAreaView>
   );
 }

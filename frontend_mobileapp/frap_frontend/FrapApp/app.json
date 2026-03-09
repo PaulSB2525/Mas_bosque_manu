@@ -9,7 +9,37 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "requireFullScreen": false,
+      "bundleIdentifier": "com.masbosquemanu.frapapp",
+      "buildNumber": "1",
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1"]
+          }
+        ]
+      },
+      "infoPlist": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1"]
+          }
+        ],
+        "NSCameraUsageDescription": "FrapApp requiere acceso a la cámara para capturar evidencia fotográfica de los incidentes y registrar el estado de la escena o del paciente. / FrapApp requires camera access to capture photographic evidence of incidents and record the status of the scene or patient.",
+        "NSPhotoLibraryUsageDescription": "FrapApp necesita acceso a la galería de fotos para permitirte adjuntar imágenes previas relacionadas con el reporte del incidente. / FrapApp needs photo library access to allow you to attach previous images related to the incident report.",
+        "NSLocationWhenInUseUsageDescription": "FrapApp utiliza tu ubicación para registrar con precisión las coordenadas exactas donde ocurrió el incidente y la atención prehospitalaria. / FrapApp uses your location to accurately record the exact coordinates where the incident and pre-hospital care occurred."
+      }
     },
     "android": {
       "adaptiveIcon": {
