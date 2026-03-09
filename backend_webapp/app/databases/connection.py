@@ -12,8 +12,8 @@ DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_NAME = os.getenv("DB_NAME")
 
-if not all([DB_USER, DB_PASS, DB_NAME]):
-    raise RuntimeError("❌ Variables de entorno de la BD incompletas")
+if not DB_USER or not DB_NAME:
+    raise RuntimeError("❌ Variables de entorno de la BD incompletas (Falta User o Name)")
 
 # Connection string
 DATABASE_URL = (

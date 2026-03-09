@@ -1,3 +1,3 @@
-const API_URL = "https://appears-fan-willow-son.trycloudflare.com";
+const API_URL = "http://192.168.1.167:3000";
 
 module.exports = API_URL;
