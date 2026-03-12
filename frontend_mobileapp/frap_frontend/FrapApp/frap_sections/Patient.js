@@ -30,7 +30,7 @@ export default function PatientSection({ data, onUpdate }) {
     <View style={styles.container}>
       <Text style={styles.title}>Datos del Paciente</Text>
 
-      <TextInput
+      <TextInput placeholderTextColor="#888888"
         placeholder="Nombre Completo"
         style={styles.mainInput}
         value={data.nombre}
@@ -38,7 +38,7 @@ export default function PatientSection({ data, onUpdate }) {
       />
 
       <View style={styles.row}>
-        <TextInput
+        <TextInput placeholderTextColor="#888888"
           placeholder="Edad"
           style={[styles.mainInput, { flex: 1, marginTop: 0 }]}
           keyboardType="numeric"
@@ -85,7 +85,7 @@ export default function PatientSection({ data, onUpdate }) {
             <View style={styles.floatingLabel}>
               <Text style={styles.arrayLabelText}>{item.label}</Text>
             </View>
-            <TextInput
+            <TextInput placeholderTextColor="#888888"
               multiline
               style={styles.textArea}
               placeholder={item.ph}

@@ -131,13 +131,13 @@ export default function SuppliesSection({ data, onUpdate }) {
                 <View style={styles.customSection}>
                     <Text style={styles.subtitulo}>Agregar insumo personalizado:</Text>
                     <View style={styles.customInputs}>
-                        <TextInput
+                        <TextInput placeholderTextColor="#888888"
                             style={styles.customTextInput}
                             placeholder="Nombre: "
                             value={customSupply}
                             onChangeText={setCustomSupply}
                         />
-                        <TextInput
+                        <TextInput placeholderTextColor="#888888"
                             style={styles.customQuantityInput}
                             placeholder="Cant."
                             keyboardType="numeric"

@@ -62,7 +62,7 @@ export default function InjurySection({ data, onUpdate }) {
                 })}
             </View>
 
-            <TextInput
+            <TextInput placeholderTextColor="#888888"
                 placeholder="Otra lesión (especificar):"
                 style={styles.other}
                 value={otherText}

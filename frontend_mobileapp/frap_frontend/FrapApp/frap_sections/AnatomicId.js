@@ -62,7 +62,7 @@ export default function AnatomicSection({ data, onUpdate }) {
                 })}
             </View>
 
-            <TextInput
+            <TextInput placeholderTextColor="#888888"
                 placeholder="Otra área (especificar):"
                 style={styles.other}
                 value={otherText}

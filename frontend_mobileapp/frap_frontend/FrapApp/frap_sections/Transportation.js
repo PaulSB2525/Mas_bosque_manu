@@ -85,7 +85,7 @@ export default function TransportSection({ data, onUpdate }) {
                     <View style={styles.inputGroup}>
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Número de Unidad:</Text>
-                            <TextInput
+                            <TextInput placeholderTextColor="#888888"
                                 placeholder="Ej: ABC-001"
                                 style={styles.input}
                                 value={data.numero_unidad}
@@ -95,7 +95,7 @@ export default function TransportSection({ data, onUpdate }) {
 
                         <View style={styles.inputContainer}>
                             <Text style={styles.inputLabel}>Nombre del Operador:</Text>
-                            <TextInput
+                            <TextInput placeholderTextColor="#888888"
                                 placeholder="Nombre completo"
                                 style={styles.input}
                                 value={data.nombre_operador}
