@@ -80,7 +80,7 @@ export default function WitnessSection({ data, onUpdate }) {
                     
                     <View style={styles.inputContainer}>
                         <Text style={styles.inputLabel}>Nombre del Testigo:</Text>
-                        <TextInput
+                        <TextInput placeholderTextColor="#888888"
                             placeholder="Ingrese nombre completo"
                             style={styles.nameInput}
                             value={data.nombre_testigo}

@@ -63,14 +63,19 @@ export default function SuppliesSection({ data, onUpdate }) {
     };
 
     const updateBackend = (contadoresObj) => {
-        const insumosArray = Object.entries(contadoresObj)
+        const insumosPredefinidos = Object.entries(contadoresObj)
             .filter(([_, cantidad]) => cantidad > 0)
             .map(([id, cantidad]) => ({
                 nombre: insumosDisponibles.find(i => i.id === parseInt(id)).nombre,
                 cantidad
             }));
 
-        onUpdate(insumosArray);
+        // Mantener los insumos personalizados (aquellos cuyo nombre no está en insumosDisponibles)
+        const insumosPersonalizados = data.filter(insumo =>
+            !insumosDisponibles.some(i => i.nombre === insumo.nombre)
+        );
+
+        onUpdate([...insumosPredefinidos, ...insumosPersonalizados]);
     };
 
     const agregarInsumo = (insumo) => {
@@ -113,9 +118,16 @@ export default function SuppliesSection({ data, onUpdate }) {
         Alert.alert("Éxito", "Insumo personalizado agregado");
     };
 
-    const eliminarInsumoPersonalizado = (index) => {
-        const nuevosInsumos = data.filter((_, i) => i !== index);
-        onUpdate(nuevosInsumos);
+    const eliminarInsumoPersonalizado = (targetIndex) => {
+        const insumosPersonalizados = data.filter(insumo =>
+            !insumosDisponibles.some(i => i.nombre === insumo.nombre)
+        );
+        const targetInsumo = insumosPersonalizados[targetIndex];
+
+        if (targetInsumo) {
+            const nuevosInsumos = data.filter(item => item !== targetInsumo);
+            onUpdate(nuevosInsumos);
+        }
     };
 
     const toggleShowOptions = () => {
@@ -131,13 +143,13 @@ export default function SuppliesSection({ data, onUpdate }) {
                 <View style={styles.customSection}>
                     <Text style={styles.subtitulo}>Agregar insumo personalizado:</Text>
                     <View style={styles.customInputs}>
-                        <TextInput
+                        <TextInput placeholderTextColor="#888888"
                             style={styles.customTextInput}
                             placeholder="Nombre: "
                             value={customSupply}
                             onChangeText={setCustomSupply}
                         />
-                        <TextInput
+                        <TextInput placeholderTextColor="#888888"
                             style={styles.customQuantityInput}
                             placeholder="Cant."
                             keyboardType="numeric"

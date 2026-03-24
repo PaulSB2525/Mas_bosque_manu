@@ -21,7 +21,7 @@ export default function NotesSection({ observaciones, recomendaciones, onUpdate 
                 <View style={styles.topLabel}>
                     <Text style={styles.label}>Observaciones</Text>
                 </View>
-                <TextInput
+                <TextInput placeholderTextColor="#888888"
                     multiline
                     textAlignVertical="top"
                     style={[styles.containers, { flex: 1 }]}
@@ -38,7 +38,7 @@ export default function NotesSection({ observaciones, recomendaciones, onUpdate 
                 <View style={styles.topLabel}>
                     <Text style={styles.label}>Recomendaciones</Text>
                 </View>
-                <TextInput
+                <TextInput placeholderTextColor="#888888"
                     multiline
                     textAlignVertical="top"
                     style={[styles.containers, { flex: 1 }]}

@@ -24,7 +24,7 @@ export default function VitalsSection({ data, onUpdate }) {
             <View style={styles.topLabel}>
               <Text style={styles.vitalLabel}>{vital.text}</Text>
             </View>
-            <TextInput
+            <TextInput placeholderTextColor="#888888"
               placeholder={vital.placeholder}
               style={styles.input}
               keyboardType={vital.keyboardType}

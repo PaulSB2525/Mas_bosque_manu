@@ -151,7 +151,7 @@ export default function SignUp(){
                                 </Text>
                                 <Text style={styles.text}>{section.type}</Text>
                             </View>
-                            <TextInput 
+                            <TextInput placeholderTextColor="#888888"
                                 style={styles.input}
                                 onChangeText={(newInput) => {
                                     section.setter(newInput);

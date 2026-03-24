@@ -160,7 +160,7 @@ function Login(){
 
         <View style={styles.field}>
           <Feather name="user" size={30} style={{marginTop: 5}}/>
-          <TextInput 
+          <TextInput placeholderTextColor="#888888"
             style={styles.fieldText}
             placeholder="Usuario"
             value={usuario}
@@ -175,7 +175,7 @@ function Login(){
 
         <View style={[styles.field, {marginTop: 10, marginBottom: 15}]}>
           <Octicons name="lock" size={30} style={{marginTop: 5}}/>
-          <TextInput 
+          <TextInput placeholderTextColor="#888888"
             style={[styles.fieldText, {paddingRight: 40}]}
             placeholder="Contraseña"
             value={contrasena}
